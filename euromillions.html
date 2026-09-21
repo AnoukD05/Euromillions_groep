@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>EuroMillions Groepspot</title>
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#f4f5f7; --panel:#fff; --panel-2:#fafbfc; --ink:#16191d; --ink-soft:#5d646e; --line:#e2e5ea;
+  --accent:#1c5fd6; --accent-soft:#e8f0fe; --gold:#f3b700; --gold-soft:#fdf3d8; --gold-ink:#8a6508;
+  --green:#1a7f4b; --green-soft:#e4f5ec; --red:#c0392b;
+  --radius:12px; --shadow:0 1px 2px rgba(0,0,0,.05), 0 6px 18px rgba(0,0,0,.05);
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#15181c; --panel:#1e2228; --panel-2:#242931; --ink:#eceff3; --ink-soft:#9aa3ae; --line:#333a44;
+  --accent:#5b9bff; --accent-soft:#1d2c44; --gold:#e3b23c; --gold-soft:#3a2f14; --gold-ink:#f3d58a;
+  --green:#4ad18c; --green-soft:#12301f; --red:#ff7d6e;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.35);
+}}
+:root[data-theme="dark"]{
+  --bg:#15181c; --panel:#1e2228; --panel-2:#242931; --ink:#eceff3; --ink-soft:#9aa3ae; --line:#333a44;
+  --accent:#5b9bff; --accent-soft:#1d2c44; --gold:#e3b23c; --gold-soft:#3a2f14; --gold-ink:#f3d58a;
+  --green:#4ad18c; --green-soft:#12301f; --red:#ff7d6e;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.35);
+}
+*,*::before,*::after{box-sizing:inherit}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Inter,Arial,sans-serif;font-size:15px;line-height:1.5;-webkit-text-size-adjust:100%}
+.wrap{max-width:1060px;margin:0 auto;padding:16px 14px 64px}
+header.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+header.top h1{font-size:19px;margin:0;font-weight:650;letter-spacing:-.2px}
+header.top .sub{color:var(--ink-soft);font-size:12.5px;margin-top:2px}
+.logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(140deg,var(--gold),#8a6508);
+  display:grid;place-items:center;color:#fff;font-weight:700;font-size:17px;flex:none}
+.spacer{flex:1}
+.status{font-size:11.5px;color:var(--ink-soft);border:1px solid var(--line);border-radius:999px;padding:3px 10px;white-space:nowrap}
+.status.ok{color:var(--green);border-color:color-mix(in srgb,var(--green) 40%,var(--line))}
+nav.tabs{display:flex;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:4px;margin-bottom:16px;overflow-x:auto}
+nav.tabs button{flex:1;min-width:96px;border:0;background:transparent;color:var(--ink-soft);font:inherit;font-size:13.5px;
+  font-weight:550;padding:8px 10px;border-radius:999px;cursor:pointer;white-space:nowrap}
+nav.tabs button[aria-selected="true"]{background:var(--accent);color:#fff}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;margin-bottom:14px}
+.card h2{font-size:14px;text-transform:uppercase;letter-spacing:.6px;color:var(--ink-soft);margin:0 0 12px;font-weight:650}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+button.btn{font:inherit;font-size:13.5px;font-weight:550;border-radius:9px;border:1px solid var(--line);
+  background:var(--panel-2);color:var(--ink);padding:8px 13px;cursor:pointer}
+button.btn:hover{border-color:var(--accent)}
+button.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button.btn.ghost{background:transparent}
+button.btn.danger{color:var(--red);border-color:color-mix(in srgb,var(--red) 35%,var(--line))}
+button.btn.sm{padding:5px 9px;font-size:12.5px}
+a.btn{display:inline-block;text-decoration:none}
+button.icon{background:transparent;border:0;color:var(--ink-soft);cursor:pointer;font-size:15px;padding:4px 7px;border-radius:7px;line-height:1}
+button.icon:hover{background:var(--panel-2);color:var(--ink)}
+input,select,textarea{font:inherit;font-size:14px;color:var(--ink);background:var(--panel-2);
+  border:1px solid var(--line);border-radius:9px;padding:8px 10px;width:100%}
+textarea{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.45;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+label.f{display:block;font-size:12px;color:var(--ink-soft);margin-bottom:4px;font-weight:550}
+.field{flex:1;min-width:130px}
+.hint{font-size:12px;color:var(--ink-soft);margin-top:6px}
+
+/* kalender */
+.calhead{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.calhead .title{font-size:17px;font-weight:650;min-width:170px;text-transform:capitalize}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.dow{text-align:center;font-size:11px;font-weight:650;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.5px}
+.cell{aspect-ratio:1/1;border:1px solid var(--line);border-radius:10px;background:var(--panel-2);
+  display:flex;flex-direction:column;align-items:center;padding:5px 3px;position:relative;font-size:14px;color:var(--ink-soft);overflow:hidden}
+.cell.empty{border:0;background:transparent}
+.cell.draw{cursor:pointer;background:var(--gold-soft);border-color:color-mix(in srgb,var(--gold) 45%,var(--line));color:var(--ink);font-weight:600}
+.cell.draw:hover{outline:2px solid var(--gold);outline-offset:-1px}
+.cell.today{box-shadow:inset 0 0 0 2px var(--accent)}
+.cell .num{font-size:15px;line-height:1.1}
+.cell .tag{margin-top:auto;font-size:10px;font-weight:650;border-radius:5px;padding:1px 4px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cell .tag.win{background:var(--green);color:#fff}
+.cell .tag.played{background:var(--gold-ink);color:#fff}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--ink-soft);margin-top:12px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+
+/* stats & tabellen */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.stat{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:11px 13px}
+.stat .k{font-size:11.5px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+.stat .v{font-size:20px;font-weight:680;margin-top:3px;letter-spacing:-.4px}
+.pos{color:var(--green)} .neg{color:var(--red)}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:440px}
+th{text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--ink-soft);font-weight:650;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+tfoot td{font-weight:650;border-top:2px solid var(--line);border-bottom:0}
+.empty-msg{color:var(--ink-soft);font-size:13.5px;padding:14px 2px;text-align:center}
+.chip{display:inline-block;font-size:11.5px;padding:2px 8px;border-radius:999px;background:var(--panel-2);border:1px solid var(--line);color:var(--ink-soft);margin:2px 3px 2px 0}
+.chip.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:600}
+.chip.win{background:var(--green-soft);border-color:var(--green);color:var(--green);font-weight:650}
+.balls{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+.ball{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:650;background:var(--ink);color:var(--bg);flex:none}
+.ball.star{background:var(--gold);color:#4a3600}
+.ball.miss{opacity:.32}
+.ball.hit{background:var(--green);color:#fff}
+
+/* roosters */
+.rgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(188px,1fr));gap:12px}
+.rcard{border:1px solid var(--line);border-radius:12px;background:var(--panel-2);padding:10px}
+.rcard header{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.rcard header select{padding:5px 7px;font-size:13px;font-weight:600}
+.nums{display:grid;grid-template-columns:repeat(5,1fr);gap:3px}
+.stars{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;margin-top:6px}
+.pick{border:1px solid color-mix(in srgb,var(--accent) 35%,var(--line));background:var(--panel);color:var(--ink);
+  border-radius:6px;font:inherit;font-size:11.5px;font-weight:600;padding:4px 0;cursor:pointer;text-align:center;
+  font-variant-numeric:tabular-nums;line-height:1.2}
+.pick:hover{border-color:var(--accent)}
+.pick.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.pick.st{border-color:color-mix(in srgb,var(--gold) 50%,var(--line))}
+.pick.st.on{background:var(--gold);border-color:var(--gold);color:#4a3600}
+.rcard footer{display:flex;align-items:center;gap:4px;margin-top:8px}
+.rcount{font-size:11px;color:var(--ink-soft);margin-left:auto;font-weight:600}
+.rcount.bad{color:var(--red)}
+
+/* modal */
+.backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;z-index:50;align-items:flex-start;justify-content:center;
+  padding:16px;overflow-y:auto;padding-top:max(24px,env(safe-area-inset-top,0px));padding-bottom:max(24px,env(safe-area-inset-bottom,0px))}
+.backdrop.open{display:flex}
+.modal{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.35);width:100%;max-width:560px;padding:18px}
+.modal h3{margin:0 0 3px;font-size:17px}
+.modal .date-sub{color:var(--ink-soft);font-size:13px;margin-bottom:14px}
+.modal .grp{margin-bottom:14px}
+.miniballs{display:flex;gap:6px;flex-wrap:wrap}
+.miniballs input{width:46px;text-align:center;padding:7px 2px;font-variant-numeric:tabular-nums;font-weight:600}
+.miniballs input.star{background:var(--gold-soft);border-color:color-mix(in srgb,var(--gold) 45%,var(--line))}
+.playerlist{display:flex;flex-wrap:wrap;gap:6px}
+.playerlist label{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--panel-2);
+  border-radius:999px;padding:5px 11px;font-size:13.5px;cursor:pointer;user-select:none}
+.playerlist label.checked{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:600}
+.playerlist input{width:auto;margin:0}
+.calcbox{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--ink-soft)}
+.calcbox b{color:var(--ink)}
+.checkrow{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px dashed var(--line);flex-wrap:wrap}
+.checkrow:last-child{border-bottom:0}
+.checkrow .who{font-size:12.5px;font-weight:600;min-width:74px}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:6px}
+.modal-actions .left{margin-right:auto}
+@media (max-width:560px){ .wrap{padding:12px 10px 60px} table{min-width:500px} .cell .num{font-size:13px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="logo">€</div>
+    <div>
+      <h1>EuroMillions Groepspot</h1>
+      <div class="sub">Trekkingen dinsdag &amp; vrijdag · roosters · betalingen · winstverdeling</div>
+    </div>
+    <div class="spacer"></div>
+    <div class="status" id="status">Laden…</div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-tab="kalender" aria-selected="true">Kalender</button>
+    <button role="tab" data-tab="roosters" aria-selected="false">Roosters</button>
+    <button role="tab" data-tab="betalingen" aria-selected="false">Betalingen</button>
+    <button role="tab" data-tab="overzicht" aria-selected="false">Boekhouding</button>
+    <button role="tab" data-tab="spelers" aria-selected="false">Spelers</button>
+  </nav>
+
+  <!-- KALENDER -->
+  <section id="tab-kalender">
+    <div class="card">
+      <div class="calhead">
+        <button class="btn sm" id="prevM">‹</button>
+        <div class="title" id="monthTitle"></div>
+        <button class="btn sm" id="nextM">›</button>
+        <div class="spacer"></div>
+        <button class="btn sm ghost" id="todayBtn">Vandaag</button>
+      </div>
+      <div class="grid" id="dowRow"></div>
+      <div class="grid" id="calGrid" style="margin-top:6px"></div>
+      <div class="legend">
+        <span><i style="background:var(--gold)"></i>Trekkingsdag (di &amp; vr) — klik om in te vullen</span>
+        <span><i style="background:var(--green)"></i>Winst genoteerd</span>
+        <span><i style="background:var(--accent)"></i>Vandaag</span>
+      </div>
+    </div>
+    <div class="card"><h2>Deze maand</h2><div class="stats" id="monthStats"></div></div>
+    <div class="card"><h2>Laatste trekkingen</h2><div class="tblwrap"><table id="drawTable"></table></div></div>
+  </section>
+
+  <!-- ROOSTERS -->
+  <section id="tab-roosters" hidden>
+    <div class="card">
+      <div class="row" style="margin-bottom:12px">
+        <h2 style="margin:0">Vaste roosters</h2>
+        <div class="spacer"></div>
+        <button class="btn sm" id="addRooster">+ Rooster</button>
+        <button class="btn sm ghost" id="fillRoosters">Rooster per speler</button>
+      </div>
+      <div class="rgrid" id="roosterGrid"></div>
+      <div class="hint">Klik 5 getallen en 2 sterren aan, net zoals op de site van de Nationale Loterij. Deze roosters gelden voor elke trekking; je hoeft ze dus niet telkens opnieuw in te geven. Wijzigingen bewaren zichzelf, en trekkingen die al ingevuld zijn behouden de roosters zoals ze toen waren.</div>
+    </div>
+  </section>
+
+  <!-- BETALINGEN -->
+  <section id="tab-betalingen" hidden>
+    <div class="card">
+      <h2>Betaling toevoegen</h2>
+      <div class="row">
+        <div class="field"><label class="f">Naam</label><select id="payMember"></select></div>
+        <div class="field"><label class="f">Datum</label><input type="date" id="payDate"></div>
+        <div class="field" style="max-width:140px"><label class="f">Bedrag (€)</label><input type="number" step="0.01" id="payAmount" placeholder="20,00"></div>
+        <div class="field"><label class="f">Opmerking</label><input type="text" id="payNote" placeholder="bv. cash, Payconiq…"></div>
+        <button class="btn primary" id="addPay" style="margin-top:18px">Toevoegen</button>
+      </div>
+      <div class="hint">Een <b>uitbetaling</b> uit de pot noteer je als een negatief bedrag (bv. −50).</div>
+    </div>
+    <div class="card"><h2>Alle betalingen</h2><div class="tblwrap"><table id="payTable"></table></div></div>
+  </section>
+
+  <!-- BOEKHOUDING -->
+  <section id="tab-overzicht" hidden>
+    <div class="card">
+      <h2>Kas</h2>
+      <div class="stats" id="kasStats"></div>
+      <div class="hint">Saldo in kas = ingelegd − kosten van de roosters + gewonnen bedragen − uitbetalingen.</div>
+    </div>
+    <div class="card">
+      <h2>Per speler</h2>
+      <div class="tblwrap"><table id="balTable"></table></div>
+      <div class="hint"><b>Tegoed</b> = betaald − eigen aandeel in de kosten + eigen aandeel in de winst. Negatief = die persoon moet bijleggen.</div>
+      <div class="row" style="margin-top:12px"><button class="btn sm" id="exportCsv" hidden>Exporteer als CSV</button></div>
+    </div>
+  </section>
+
+  <!-- SPELERS -->
+  <section id="tab-spelers" hidden>
+    <div class="card">
+      <h2>Spelers</h2>
+      <div class="row" style="margin-bottom:12px">
+        <div class="field"><input type="text" id="newMember" placeholder="Naam van de speler"></div>
+        <button class="btn primary" id="addMember">Speler toevoegen</button>
+      </div>
+      <div class="tblwrap"><table id="memTable"></table></div>
+      <div class="hint">Zet iemand op <b>inactief</b> als die tijdelijk niet meespeelt. De historiek blijft bewaard.</div>
+    </div>
+    <div class="card">
+      <h2>Instellingen</h2>
+      <div class="row">
+        <div class="field" style="max-width:220px">
+          <label class="f">Kostprijs per rooster per trekking (€)</label>
+          <input type="number" step="0.01" id="setInleg">
+        </div>
+        <button class="btn sm" id="saveInleg" style="margin-top:18px">Bewaren</button>
+      </div>
+      <div class="hint">Een EuroMillions-rooster kost €2,50 per trekking. Wie meerdere roosters heeft, betaalt automatisch meer.</div>
+    </div>
+  </section>
+
+</div>
+
+<div class="backdrop" id="backdrop"><div class="modal" id="modal"></div></div>
+
+<script>
+"use strict";
+
+/* ---------- helpers ---------- */
+const MONTHS=["januari","februari","maart","april","mei","juni","juli","augustus","september","oktober","november","december"];
+const DOW=["ma","di","wo","do","vr","za","zo"];
+const DAGEN=["zondag","maandag","dinsdag","woensdag","donderdag","vrijdag","zaterdag"];
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const eur=n=>(n<0?"−":"")+"€ "+Math.abs(Number(n)||0).toLocaleString("nl-BE",{minimumFractionDigits:2,maximumFractionDigits:2});
+const iso=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const parseISO=s=>{const[y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d);};
+const nlDate=s=>{const d=parseISO(s);return d.getDate()+" "+MONTHS[d.getMonth()].slice(0,3)+" "+d.getFullYear();};
+const isDrawDay=d=>d.getDay()===2||d.getDay()===5;
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const num=v=>{const n=parseFloat(String(v).replace(",","."));return isFinite(n)?n:0;};
+function lotLink(dateISO){const[y,m,d]=dateISO.split("-");return"https://www.nationale-loterij.be/onze-spelen/euromillions/uitslagen-trekking/"+d+"-"+m+"-"+y;}
+
+/* ---------- winstrangen ---------- */
+const RANGEN=["5+2","5+1","5+0","4+2","4+1","3+2","4+0","2+2","3+1","3+0","1+2","2+1","2+0"];
+const rangVan=(n,s)=>{const k=n+"+"+s;return RANGEN.includes(k)?k:null;};
+// "€ 198.228,20" -> 198228.20   |   "1.273,20" -> 1273.20   |   "56.00" -> 56
+function euroNaarGetal(t){
+  let s=String(t).replace(/[^\d.,-]/g,"");
+  if(!s)return 0;
+  if(s.includes(",")) s=s.replace(/\./g,"").replace(",",".");
+  else if((s.match(/\./g)||[]).length>1) s=s.replace(/\./g,"");
+  const n=parseFloat(s); return isFinite(n)?n:0;
+}
+// Plakt de prijzentabel van de loterijsite -> {"5+1":198228.20, ...}
+function parsePrijzen(text){
+  const out={};
+  String(text||"").split(/\n+/).forEach(line=>{
+    const m=line.match(/(\d)\s*\+\s*(\d)/); if(!m)return;
+    const rang=rangVan(Number(m[1]),Number(m[2])); if(!rang)return;
+    const rest=line.slice(line.indexOf(m[0])+m[0].length);
+    const bedragen=rest.match(/[\d][\d.,]*/g)||[];
+    if(!bedragen.length)return;
+    out[rang]=euroNaarGetal(bedragen[bedragen.length-1]);
+  });
+  return out;
+}
+function prijzenNaarTekst(p){
+  if(!p)return"";
+  return RANGEN.filter(r=>p[r]!=null).map(r=>r+"\t"+eur(p[r])).join("\n");
+}
+
+/* ---------- state ---------- */
+let state={config:{members:[],inleg:2.5,roosters:[]},payments:[],draws:{}};
+let db=null,downloads=null,writable=true;
+let view=new Date(); view.setDate(1);
+
+const LS="em-pool-v2";
+function saveLocal(){try{localStorage.setItem(LS,JSON.stringify(state));}catch(e){}}
+function loadLocal(){try{const r=localStorage.getItem(LS);if(r){const p=JSON.parse(r);
+  state=Object.assign(state,p);state.config=Object.assign({members:[],inleg:2.5,roosters:[]},p.config||{});}}catch(e){}}
+
+async function initStore(){
+  try{db=await claude.use("db");}catch(e){db=null;}
+  try{downloads=await claude.use("downloads");}catch(e){downloads=null;}
+  if(downloads)$("#exportCsv").hidden=false;
+  if(!db){loadLocal();$("#status").textContent="Lokaal opgeslagen (alleen dit toestel)";renderAll();return;}
+  $("#status").textContent="Gedeeld — verbinden…";
+  db.doc("pool/config").onSnapshot(s=>{
+    const d=s.exists?s.data():null;
+    state.config={
+      members:Array.isArray(d&&d.members)?d.members:[],
+      inleg:(d&&typeof d.inleg==="number")?d.inleg:2.5,
+      roosters:Array.isArray(d&&d.roosters)?d.roosters:[]
+    };
+    $("#status").textContent="Gedeeld met de groep";$("#status").className="status ok";
+    renderAll();
+  },()=>{});
+  db.collection("payments").onSnapshot(s=>{state.payments=s.docs.map(d=>Object.assign({id:d.id},d.data()));renderAll();},()=>{});
+  db.collection("draws").onSnapshot(s=>{const o={};s.docs.forEach(d=>{o[d.id]=Object.assign({},d.data());});state.draws=o;renderAll();},()=>{});
+}
+async function writeConfig(){
+  if(!db){saveLocal();renderAll();return;}
+  try{await db.doc("pool/config").set({members:state.config.members,inleg:state.config.inleg,roosters:state.config.roosters||[]});}
+  catch(e){onWriteFail(e);}
+}
+let cfgTimer=null;
+function writeConfigSoon(){clearTimeout(cfgTimer);cfgTimer=setTimeout(writeConfig,500);}
+async function writeDraw(date,data){
+  if(!db){state.draws[date]=data;saveLocal();renderAll();return;}
+  try{await db.doc("draws/"+date).set(data);}catch(e){onWriteFail(e);}
+}
+async function deleteDraw(date){
+  if(!db){delete state.draws[date];saveLocal();renderAll();return;}
+  try{await db.doc("draws/"+date).delete();}catch(e){onWriteFail(e);}
+}
+async function writePayment(p){
+  if(!db){const i=state.payments.findIndex(x=>x.id===p.id);if(i<0)state.payments.push(p);else state.payments[i]=p;saveLocal();renderAll();return;}
+  try{const{id,...body}=p;await db.doc("payments/"+id).set(body);}catch(e){onWriteFail(e);}
+}
+async function deletePayment(id){
+  if(!db){state.payments=state.payments.filter(x=>x.id!==id);saveLocal();renderAll();return;}
+  try{await db.doc("payments/"+id).delete();}catch(e){onWriteFail(e);}
+}
+function onWriteFail(e){
+  if(e&&e.code==="invalid_argument"){writable=false;$("#status").textContent="Alleen-lezen";$("#status").className="status";}
+  else $("#status").textContent="Bewaren mislukt — probeer opnieuw";
+  renderAll();
+}
+
+/* ---------- berekeningen ---------- */
+const memberById=id=>state.config.members.find(m=>m.id===id);
+const memberName=id=>{const m=memberById(id);return m?m.naam:"Onbekend";};
+const drawList=()=>Object.keys(state.draws).sort().map(k=>Object.assign({datum:k},state.draws[k]));
+const roostersVan=mid=>(state.config.roosters||[]).filter(r=>r.memberId===mid);
+
+/** Roosters die meedoen aan een trekking: die van de aangeduide spelers. */
+function roostersVoorTrekking(d){
+  if(Array.isArray(d.roosters)&&d.roosters.length)return d.roosters;   // opgeslagen momentopname
+  const sp=Array.isArray(d.spelers)?d.spelers:[];
+  return (state.config.roosters||[]).filter(r=>sp.includes(r.memberId));
+}
+function checkRooster(r,winN,winS){
+  const n=(r.n||[]).filter(x=>winN.includes(x)).length;
+  const s=(r.s||[]).filter(x=>winS.includes(x)).length;
+  return{n,s,rang:rangVan(n,s)};
+}
+/** Winst per rooster op basis van de geplakte prijzentabel. */
+function berekenWinst(d){
+  const winN=(d.nummers||[]).map(Number).filter(Boolean);
+  const winS=(d.sterren||[]).map(Number).filter(Boolean);
+  const prijzen=d.prijzen||{};
+  const rs=roostersVoorTrekking(d);
+  const detail=rs.map(r=>{
+    const c=checkRooster(r,winN,winS);
+    const bedrag=(c.rang&&prijzen[c.rang]!=null)?Number(prijzen[c.rang]):0;
+    return{rooster:r,...c,bedrag};
+  });
+  return{detail,totaal:detail.reduce((s,x)=>s+x.bedrag,0),compleet:winN.length===5&&winS.length===2};
+}
+/** Winst van een trekking: handmatige override, anders berekend. */
+function winstVan(d){
+  if(d.winstManueel!=null&&d.winstManueel!=="")return num(d.winstManueel);
+  return berekenWinst(d).totaal;
+}
+
+function computeTotals(){
+  const per={};
+  state.config.members.forEach(m=>per[m.id]={id:m.id,naam:m.naam,betaald:0,kosten:0,winst:0,trekkingen:0});
+  const ensure=id=>per[id]||(per[id]={id,naam:memberName(id),betaald:0,kosten:0,winst:0,trekkingen:0});
+  state.payments.forEach(p=>{ensure(p.memberId).betaald+=num(p.bedrag);});
+
+  let totKosten=0,totWinst=0;
+  drawList().forEach(d=>{
+    const inleg=num(d.inleg);
+    const rs=roostersVoorTrekking(d);
+    const w=berekenWinst(d);
+    const manueel=(d.winstManueel!=null&&d.winstManueel!=="")?num(d.winstManueel):null;
+    const totaalWinst=manueel!=null?manueel:w.totaal;
+    totWinst+=totaalWinst;
+
+    const perLid={};
+    rs.forEach(r=>{
+      totKosten+=inleg;
+      const rr=ensure(r.memberId);
+      rr.kosten+=inleg;
+      perLid[r.memberId]=(perLid[r.memberId]||0)+1;
+    });
+    Object.keys(perLid).forEach(id=>{ensure(id).trekkingen+=1;});
+
+    if(totaalWinst>0){
+      // De winst is gezamenlijk: iedereen speelt zijn eigen rooster, maar wat
+      // er gewonnen wordt gaat in de gezamenlijke pot en wordt gelijk verdeeld
+      // over alle roosters die die trekking meespeelden.
+      const n=rs.length||1;
+      rs.forEach(r=>ensure(r.memberId).winst+=totaalWinst/n);
+    }
+  });
+
+  const rows=Object.values(per);
+  rows.forEach(r=>r.tegoed=r.betaald-r.kosten+r.winst);
+  rows.sort((a,b)=>a.naam.localeCompare(b.naam,"nl"));
+  const totBetaald=rows.reduce((s,r)=>s+r.betaald,0);
+  return{rows,totBetaald,totKosten,totWinst,kas:totBetaald-totKosten+totWinst};
+}
+
+/* ---------- render ---------- */
+function renderAll(){
+  renderCalendar();renderMonthStats();renderDrawTable();
+  renderRoosters();renderPayments();renderOverzicht();renderMembers();
+  if(document.activeElement!==$("#setInleg"))$("#setInleg").value=state.config.inleg;
+  if(!writable)document.querySelectorAll("input,select,textarea,button.btn").forEach(el=>{
+    if(el.id!=="exportCsv"&&!el.closest("nav.tabs")&&!el.closest(".calhead"))el.disabled=true;
+  });
+}
+
+function renderCalendar(){
+  $("#dowRow").innerHTML=DOW.map(d=>'<div class="dow">'+d+'</div>').join("");
+  $("#monthTitle").textContent=MONTHS[view.getMonth()]+" "+view.getFullYear();
+  const first=new Date(view.getFullYear(),view.getMonth(),1);
+  const lead=(first.getDay()+6)%7;
+  const daysIn=new Date(view.getFullYear(),view.getMonth()+1,0).getDate();
+  const today=iso(new Date());
+  let html="";
+  for(let i=0;i<lead;i++)html+='<div class="cell empty"></div>';
+  for(let day=1;day<=daysIn;day++){
+    const d=new Date(view.getFullYear(),view.getMonth(),day),key=iso(d),rec=state.draws[key];
+    const cls=["cell"];
+    if(isDrawDay(d))cls.push("draw");
+    if(key===today)cls.push("today");
+    let tag="";
+    if(rec){
+      const w=winstVan(rec);
+      tag=w>0?'<span class="tag win">'+eur(w).replace("€ ","€")+'</span>'
+            :'<span class="tag played">'+roostersVoorTrekking(rec).length+' r.</span>';
+    }
+    html+='<div class="'+cls.join(" ")+'"'+(isDrawDay(d)?' data-date="'+key+'" role="button" tabindex="0"':"")+'>'
+        +'<span class="num">'+day+'</span>'+tag+'</div>';
+  }
+  const grid=$("#calGrid");grid.innerHTML=html;
+  grid.querySelectorAll("[data-date]").forEach(el=>{
+    el.addEventListener("click",()=>openDraw(el.dataset.date));
+    el.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();openDraw(el.dataset.date);}});
+  });
+}
+
+function renderMonthStats(){
+  const pre=iso(view).slice(0,7);
+  let kosten=0,winst=0,n=0;
+  drawList().filter(d=>d.datum.startsWith(pre)).forEach(d=>{n++;kosten+=roostersVoorTrekking(d).length*num(d.inleg);winst+=winstVan(d);});
+  const paid=state.payments.filter(p=>String(p.datum||"").startsWith(pre)).reduce((s,p)=>s+num(p.bedrag),0);
+  const saldo=winst-kosten;
+  $("#monthStats").innerHTML=[
+    ["Ingevulde trekkingen",String(n)],["Ingelegd deze maand",eur(paid)],
+    ["Kost roosters",eur(kosten)],["Gewonnen",eur(winst),winst>0?"pos":""],
+    ["Resultaat",eur(saldo),saldo>0?"pos":(saldo<0?"neg":"")]
+  ].map(([k,v,c])=>'<div class="stat"><div class="k">'+k+'</div><div class="v '+(c||"")+'">'+v+'</div></div>').join("");
+}
+
+function renderDrawTable(){
+  const list=drawList().reverse().slice(0,25),t=$("#drawTable");
+  if(!list.length){t.innerHTML='<tbody><tr><td class="empty-msg">Nog geen trekkingen ingevuld. Klik op een dinsdag of vrijdag in de kalender.</td></tr></tbody>';return;}
+  t.innerHTML='<thead><tr><th>Datum</th><th>Getallen</th><th class="num">Roosters</th><th class="num">Kost</th><th class="num">Winst</th><th></th></tr></thead><tbody>'
+    +list.map(d=>{
+      const rs=roostersVoorTrekking(d).length,w=winstVan(d);
+      const balls=(d.nummers||[]).filter(Boolean).map(n=>'<span class="ball">'+esc(n)+'</span>').join("")
+        +(d.sterren||[]).filter(Boolean).map(n=>'<span class="ball star">'+esc(n)+'</span>').join("");
+      return '<tr><td>'+nlDate(d.datum)+'</td><td><div class="balls">'+(balls||'<span style="color:var(--ink-soft)">—</span>')+'</div></td>'
+        +'<td class="num">'+rs+'</td><td class="num">'+eur(rs*num(d.inleg))+'</td>'
+        +'<td class="num '+(w>0?"pos":"")+'">'+(w?eur(w):"—")+'</td>'
+        +'<td class="num"><button class="icon" data-open="'+d.datum+'">✎</button></td></tr>';
+    }).join("")+'</tbody>';
+  t.querySelectorAll("[data-open]").forEach(b=>b.addEventListener("click",()=>openDraw(b.dataset.open)));
+}
+
+/* ---------- roosters ---------- */
+function memberOptions(sel){
+  return state.config.members.map(m=>'<option value="'+m.id+'"'+(m.id===sel?" selected":"")+'>'+esc(m.naam)+'</option>').join("")
+    ||'<option value="">— geen spelers —</option>';
+}
+function renderRoosters(){
+  const g=$("#roosterGrid"),rs=state.config.roosters||[];
+  if(!rs.length){g.innerHTML='<div class="empty-msg">Nog geen roosters. Klik op “Rooster per speler” om voor iedereen een leeg rooster te maken.</div>';return;}
+  g.innerHTML=rs.map(r=>{
+    const n=r.n||[],s=r.s||[];
+    let nums="";for(let i=1;i<=50;i++)nums+='<button class="pick'+(n.includes(i)?" on":"")+'" data-r="'+r.id+'" data-n="'+i+'">'+i+'</button>';
+    let sts="";for(let i=1;i<=12;i++)sts+='<button class="pick st'+(s.includes(i)?" on":"")+'" data-r="'+r.id+'" data-s="'+i+'">★'+i+'</button>';
+    const ok=n.length===5&&s.length===2;
+    return '<div class="rcard"><header><select data-rm="'+r.id+'">'+memberOptions(r.memberId)+'</select>'
+      +'<button class="icon" data-rdel="'+r.id+'" title="Rooster verwijderen">✕</button></header>'
+      +'<div class="nums">'+nums+'</div><div class="stars">'+sts+'</div>'
+      +'<footer><button class="btn sm ghost" data-rqp="'+r.id+'">Quick Pick</button>'
+      +'<button class="btn sm ghost" data-rclr="'+r.id+'">Wissen</button>'
+      +'<span class="rcount'+(ok?"":" bad")+'">'+n.length+'/5 · '+s.length+'/2</span></footer></div>';
+  }).join("");
+
+  g.querySelectorAll("[data-n]").forEach(b=>b.addEventListener("click",()=>toggleRooster(b.dataset.r,"n",Number(b.dataset.n),5)));
+  g.querySelectorAll("[data-s]").forEach(b=>b.addEventListener("click",()=>toggleRooster(b.dataset.r,"s",Number(b.dataset.s),2)));
+  g.querySelectorAll("[data-rm]").forEach(sel=>sel.addEventListener("change",()=>{
+    const r=findRooster(sel.dataset.rm);if(r){r.memberId=sel.value;writeConfigSoon();}
+  }));
+  g.querySelectorAll("[data-rdel]").forEach(b=>b.addEventListener("click",()=>{
+    if(confirm("Dit rooster verwijderen?")){state.config.roosters=state.config.roosters.filter(x=>x.id!==b.dataset.rdel);writeConfig();}
+  }));
+  g.querySelectorAll("[data-rqp]").forEach(b=>b.addEventListener("click",()=>{
+    const r=findRooster(b.dataset.rqp);if(!r)return;
+    r.n=pickRandom(50,5);r.s=pickRandom(12,2);renderRoosters();writeConfigSoon();
+  }));
+  g.querySelectorAll("[data-rclr]").forEach(b=>b.addEventListener("click",()=>{
+    const r=findRooster(b.dataset.rclr);if(!r)return;r.n=[];r.s=[];renderRoosters();writeConfigSoon();
+  }));
+}
+const findRooster=id=>(state.config.roosters||[]).find(r=>r.id===id);
+function pickRandom(max,count){
+  const pool=[];for(let i=1;i<=max;i++)pool.push(i);
+  for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
+  return pool.slice(0,count).sort((a,b)=>a-b);
+}
+function toggleRooster(id,veld,waarde,max){
+  const r=findRooster(id);if(!r)return;
+  const arr=r[veld]||(r[veld]=[]);
+  const i=arr.indexOf(waarde);
+  if(i>=0)arr.splice(i,1);
+  else{if(arr.length>=max)arr.shift();arr.push(waarde);arr.sort((a,b)=>a-b);}
+  renderRoosters();writeConfigSoon();
+}
+
+function renderPayments(){
+  const sel=$("#payMember"),cur=sel.value;
+  sel.innerHTML=state.config.members.map(m=>'<option value="'+m.id+'">'+esc(m.naam)+(m.actief===false?" (inactief)":"")+'</option>').join("")
+    ||'<option value="">— voeg eerst spelers toe —</option>';
+  if(cur)sel.value=cur;
+  const list=state.payments.slice().sort((a,b)=>String(b.datum||"").localeCompare(String(a.datum||"")));
+  const t=$("#payTable");
+  if(!list.length){t.innerHTML='<tbody><tr><td class="empty-msg">Nog geen betalingen genoteerd.</td></tr></tbody>';return;}
+  const tot=list.reduce((s,p)=>s+num(p.bedrag),0);
+  t.innerHTML='<thead><tr><th>Naam</th><th>Datum</th><th class="num">Bedrag</th><th>Opmerking</th><th></th></tr></thead><tbody>'
+    +list.map(p=>'<tr><td>'+esc(memberName(p.memberId))+'</td><td>'+(p.datum?nlDate(p.datum):"—")+'</td>'
+      +'<td class="num '+(num(p.bedrag)<0?"neg":"")+'">'+eur(p.bedrag)+'</td><td>'+esc(p.notitie||"")+'</td>'
+      +'<td class="num"><button class="icon" data-delpay="'+p.id+'">✕</button></td></tr>').join("")
+    +'</tbody><tfoot><tr><td colspan="2">Totaal</td><td class="num">'+eur(tot)+'</td><td colspan="2"></td></tr></tfoot>';
+  t.querySelectorAll("[data-delpay]").forEach(b=>b.addEventListener("click",()=>{
+    if(confirm("Deze betaling verwijderen?"))deletePayment(b.dataset.delpay);}));
+}
+
+function renderOverzicht(){
+  const T=computeTotals();
+  $("#kasStats").innerHTML=[
+    ["Totaal ingelegd",eur(T.totBetaald)],["Kost van de roosters",eur(T.totKosten)],
+    ["Totaal gewonnen",eur(T.totWinst),T.totWinst>0?"pos":""],
+    ["Resultaat",eur(T.totWinst-T.totKosten),(T.totWinst-T.totKosten)>=0?"pos":"neg"],
+    ["Saldo in kas",eur(T.kas),T.kas>=0?"pos":"neg"]
+  ].map(([k,v,c])=>'<div class="stat"><div class="k">'+k+'</div><div class="v '+(c||"")+'">'+v+'</div></div>').join("");
+  const t=$("#balTable");
+  if(!T.rows.length){t.innerHTML='<tbody><tr><td class="empty-msg">Voeg spelers toe in het tabblad “Spelers”.</td></tr></tbody>';return;}
+  t.innerHTML='<thead><tr><th>Naam</th><th class="num">Trekkingen</th><th class="num">Betaald</th><th class="num">Eigen kost</th><th class="num">Winstaandeel</th><th class="num">Tegoed</th></tr></thead><tbody>'
+    +T.rows.map(r=>'<tr><td>'+esc(r.naam)+'</td><td class="num">'+r.trekkingen+'</td><td class="num">'+eur(r.betaald)+'</td>'
+      +'<td class="num">'+eur(r.kosten)+'</td><td class="num '+(r.winst>0?"pos":"")+'">'+eur(r.winst)+'</td>'
+      +'<td class="num '+(r.tegoed>=0?"pos":"neg")+'"><b>'+eur(r.tegoed)+'</b></td></tr>').join("")
+    +'</tbody><tfoot><tr><td>Totaal</td><td class="num"></td><td class="num">'+eur(T.totBetaald)+'</td><td class="num">'+eur(T.totKosten)
+    +'</td><td class="num">'+eur(T.totWinst)+'</td><td class="num">'+eur(T.kas)+'</td></tr></tfoot>';
+}
+
+function renderMembers(){
+  const t=$("#memTable"),ms=state.config.members;
+  if(!ms.length){t.innerHTML='<tbody><tr><td class="empty-msg">Nog geen spelers.</td></tr></tbody>';return;}
+  t.innerHTML='<thead><tr><th>Naam</th><th>Status</th><th class="num">Roosters</th><th></th></tr></thead><tbody>'
+    +ms.map(m=>'<tr><td>'+esc(m.naam)+'</td>'
+      +'<td><span class="chip '+(m.actief===false?"":"on")+'">'+(m.actief===false?"inactief":"actief")+'</span></td>'
+      +'<td class="num">'+roostersVan(m.id).length+'</td>'
+      +'<td class="num"><button class="btn sm ghost" data-toggle="'+m.id+'">'+(m.actief===false?"Activeren":"Op inactief")+'</button> '
+      +'<button class="icon" data-delmem="'+m.id+'">✕</button></td></tr>').join("")+'</tbody>';
+  t.querySelectorAll("[data-toggle]").forEach(b=>b.addEventListener("click",()=>{
+    const m=memberById(b.dataset.toggle);if(!m)return;m.actief=(m.actief===false);writeConfig();}));
+  t.querySelectorAll("[data-delmem]").forEach(b=>b.addEventListener("click",()=>{
+    const m=memberById(b.dataset.delmem);if(!m)return;
+    if(confirm("“"+m.naam+"” verwijderen? Kies eerder “Op inactief” zodat de historiek klopt.")){
+      state.config.members=state.config.members.filter(x=>x.id!==m.id);writeConfig();}}));
+}
+
+/* ---------- trekking-venster ---------- */
+let modalDate=null;
+let mWinstIsAuto=true;
+function openDraw(date){
+  modalDate=date;
+  const rec=state.draws[date]||null;
+  mWinstIsAuto=!(rec&&rec.winstManueel!=null);
+  const actieve=state.config.members.filter(m=>m.actief!==false).map(m=>m.id);
+  const spelers=rec&&Array.isArray(rec.spelers)?rec.spelers:actieve;
+  const nummers=rec&&Array.isArray(rec.nummers)?rec.nummers:["","","","",""];
+  const sterren=rec&&Array.isArray(rec.sterren)?rec.sterren:["",""];
+  const inleg=rec?rec.inleg:state.config.inleg;
+  const d=parseISO(date);
+
+  $("#modal").innerHTML=
+    '<h3>Trekking van '+nlDate(date)+'</h3><div class="date-sub">'+DAGEN[d.getDay()]+'</div>'
+
+  +'<div class="grp"><label class="f">Wie speelt mee?</label><div class="playerlist" id="mPlayers">'
+  +(state.config.members.length
+      ?state.config.members.map(m=>{
+        const n=roostersVan(m.id).length;
+        return '<label class="'+(spelers.includes(m.id)?"checked":"")+'"><input type="checkbox" value="'+m.id+'" '+(spelers.includes(m.id)?"checked":"")+'>'
+          +esc(m.naam)+(n>1?' <span class="chip">'+n+' roosters</span>':'')+'</label>';}).join("")
+      :'<span style="color:var(--ink-soft);font-size:13px">Voeg eerst spelers toe.</span>')
+  +'</div><div class="row" style="margin-top:8px">'
+  +'<button class="btn sm ghost" id="mAll">Iedereen</button><button class="btn sm ghost" id="mActive">Enkel actieve</button>'
+  +'<button class="btn sm ghost" id="mNone">Niemand</button></div></div>'
+
+  +'<div class="grp"><label class="f">Kostprijs per rooster (€)</label>'
+  +'<input type="number" step="0.01" id="mInleg" value="'+inleg+'" style="max-width:150px"></div>'
+
+  +'<div class="grp"><label class="f">Winnende getallen + sterren</label><div class="miniballs">'
+  +nummers.slice(0,5).map((n,i)=>'<input inputmode="numeric" maxlength="2" data-n="'+i+'" value="'+esc(n)+'" placeholder="–">').join("")
+  +sterren.slice(0,2).map((n,i)=>'<input class="star" inputmode="numeric" maxlength="2" data-s="'+i+'" value="'+esc(n)+'" placeholder="★">').join("")
+  +'</div><div class="row" style="margin-top:8px">'
+  +'<a class="btn sm ghost" href="'+lotLink(date)+'" target="_blank" rel="noopener">Uitslag opzoeken ↗</a>'
+  +'<input type="text" id="mPaste" placeholder="of plak: 8 17 25 30 44 2 3" style="flex:1;min-width:150px"></div></div>'
+
+  +'<div class="grp"><label class="f">Prijzentabel — plak de tabel van de loterijsite</label>'
+  +'<textarea id="mPrijzen" rows="5" placeholder="5+2&#9;0&#9;0&#9;€ 0,00&#10;5+1&#9;0&#9;3&#9;€ 198.228,20&#10;4+2&#9;3&#9;34&#9;€ 1.273,20&#10;…">'
+  +esc(prijzenNaarTekst(rec&&rec.prijzen))+'</textarea>'
+  +'<div class="hint">Kolommen met winnaars mogen erbij blijven staan — het laatste bedrag per lijn wordt als winst per winnaar gelezen.</div></div>'
+
+  +'<div class="grp"><label class="f">Controle van de roosters</label><div id="mCheck"></div></div>'
+
+  +'<div class="grp"><label class="f">Gewonnen bedrag (€)</label>'
+  +'<div class="row"><input type="number" step="0.01" id="mWinst" value="'+esc(rec&&rec.winstManueel!=null?rec.winstManueel:"")+'" style="max-width:200px" placeholder="0,00">'
+  +'<button class="btn sm ghost" type="button" id="mWinstAuto">↺ Automatisch</button></div>'
+  +'<div class="hint" id="mWinstHint"></div></div>'
+
+  +'<div class="grp calcbox" id="mCalc"></div>'
+  +'<div class="modal-actions">'
+  +(rec?'<button class="btn sm danger left" id="mDel">Verwijderen</button>':'<span class="left"></span>')
+  +'<button class="btn" id="mCancel">Annuleren</button><button class="btn primary" id="mSave">Bewaren</button></div>';
+
+  $("#mPlayers").addEventListener("change",e=>{
+    if(e.target.matches("input[type=checkbox]"))e.target.closest("label").classList.toggle("checked",e.target.checked);
+    refreshModal();
+  });
+  $("#mAll").onclick=()=>setPlayers(state.config.members.map(m=>m.id));
+  $("#mActive").onclick=()=>setPlayers(actieve);
+  $("#mNone").onclick=()=>setPlayers([]);
+  $("#mInleg").addEventListener("input",refreshModal);
+  $("#mWinst").addEventListener("input",()=>{mWinstIsAuto=false;refreshModal();});
+  $("#mWinstAuto").addEventListener("click",()=>{mWinstIsAuto=true;refreshModal();});
+  $("#mPrijzen").addEventListener("input",refreshModal);
+  $("#modal").querySelectorAll("[data-n],[data-s]").forEach(inp=>inp.addEventListener("input",()=>{
+    if(inp.value.length>=2){const nx=inp.nextElementSibling;if(nx&&nx.tagName==="INPUT")nx.focus();}
+    refreshModal();
+  }));
+  $("#mPaste").addEventListener("input",e=>{
+    const nums=(e.target.value.match(/\d{1,2}/g)||[]).map(Number).filter(x=>x>=1&&x<=50);
+    if(nums.length<7)return;
+    const ins=$("#modal").querySelectorAll("[data-n]"),sts=$("#modal").querySelectorAll("[data-s]");
+    nums.slice(0,5).forEach((v,i)=>ins[i].value=v);
+    nums.slice(5,7).forEach((v,i)=>sts[i].value=v);
+    e.target.value="";refreshModal();
+  });
+  $("#mCancel").onclick=closeModal;
+  $("#mSave").onclick=saveDraw;
+  if(rec)$("#mDel").onclick=()=>{if(confirm("Deze trekking verwijderen?")){deleteDraw(date);closeModal();}};
+
+  refreshModal();
+  $("#backdrop").classList.add("open");
+  document.body.style.overflow="hidden";
+}
+function setPlayers(ids){
+  $("#mPlayers").querySelectorAll("input[type=checkbox]").forEach(cb=>{
+    cb.checked=ids.includes(cb.value);cb.closest("label").classList.toggle("checked",cb.checked);});
+  refreshModal();
+}
+const selectedPlayers=()=>Array.from($("#mPlayers").querySelectorAll("input[type=checkbox]:checked")).map(cb=>cb.value);
+function modalDraw(){
+  return{
+    spelers:selectedPlayers(),
+    inleg:num($("#mInleg").value),
+    nummers:Array.from($("#modal").querySelectorAll("[data-n]")).map(i=>i.value.trim()).filter(Boolean).map(Number),
+    sterren:Array.from($("#modal").querySelectorAll("[data-s]")).map(i=>i.value.trim()).filter(Boolean).map(Number),
+    prijzen:parsePrijzen($("#mPrijzen").value)
+  };
+}
+function refreshModal(){
+  const d=modalDraw();
+  const rs=roostersVoorTrekking(d);
+  const w=berekenWinst(d);
+  const winstEl=$("#mWinst");
+
+  if(mWinstIsAuto){
+    winstEl.value=(w.compleet&&rs.length)?w.totaal.toFixed(2):"";
+  }
+  const totaal=winstEl.value.trim()!==""?num(winstEl.value):0;
+
+  const hint=$("#mWinstHint");
+  if(mWinstIsAuto){
+    hint.textContent=(w.compleet&&rs.length)
+      ?"Automatisch berekend uit de winnende getallen en de prijzentabel hierboven."
+      :"Wordt automatisch ingevuld zodra de winnende getallen en de prijzentabel volledig zijn.";
+  }else{
+    hint.textContent="Handmatig ingesteld — klik “↺ Automatisch” om opnieuw uit de prijzentabel te berekenen.";
+  }
+
+  const box=$("#mCheck");
+  if(!rs.length) box.innerHTML='<div class="hint">Geen roosters — duid spelers aan, of maak roosters aan in het tabblad “Roosters”.</div>';
+  else if(!w.compleet) box.innerHTML='<div class="hint">'+rs.length+' rooster(s) doen mee. Vul de winnende getallen in om te controleren.</div>';
+  else box.innerHTML=w.detail.map(x=>{
+    const balls=(x.rooster.n||[]).map(v=>'<span class="ball '+(d.nummers.includes(v)?"hit":"miss")+'">'+v+'</span>').join("")
+      +(x.rooster.s||[]).map(v=>'<span class="ball star '+(d.sterren.includes(v)?"":"miss")+'">'+v+'</span>').join("");
+    const lbl=x.rang
+      ?'<span class="chip win">'+x.rang+(x.bedrag>0?" · "+eur(x.bedrag):" · bedrag ontbreekt")+'</span>'
+      :'<span class="chip">'+x.n+'+'+x.s+'</span>';
+    return '<div class="checkrow"><span class="who">'+esc(memberName(x.rooster.memberId))+'</span><div class="balls">'+balls+'</div>'+lbl+'</div>';
+  }).join("");
+
+  const kost=rs.length*d.inleg,netto=totaal-kost;
+  $("#mCalc").innerHTML='<b>'+rs.length+'</b> rooster(s) × '+eur(d.inleg)+' = <b>'+eur(kost)+'</b> inzet. '
+    +'Winst: <b>'+eur(totaal)+'</b>'+(mWinstIsAuto?" (automatisch)":" (handmatig)")
+    +'. Netto: <b class="'+(netto>=0?"pos":"neg")+'">'+eur(netto)+'</b>.';
+}
+async function saveDraw(){
+  const d=modalDraw();
+  const data={
+    spelers:d.spelers, inleg:d.inleg, nummers:d.nummers, sterren:d.sterren, prijzen:d.prijzen,
+    roosters:roostersVoorTrekking({spelers:d.spelers}).map(r=>({id:r.id,memberId:r.memberId,n:r.n||[],s:r.s||[]})),
+    winstManueel: mWinstIsAuto?null:num($("#mWinst").value)
+  };
+  closeModal();
+  await writeDraw(modalDate,data);
+}
+function closeModal(){
+  $("#backdrop").classList.remove("open");document.body.style.overflow="";$("#modal").innerHTML="";
+}
+$("#backdrop").addEventListener("click",e=>{if(e.target===$("#backdrop"))closeModal();});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&$("#backdrop").classList.contains("open"))closeModal();});
+
+/* ---------- tabs & acties ---------- */
+document.querySelectorAll("nav.tabs button").forEach(b=>b.addEventListener("click",()=>{
+  document.querySelectorAll("nav.tabs button").forEach(x=>x.setAttribute("aria-selected",String(x===b)));
+  ["kalender","roosters","betalingen","overzicht","spelers"].forEach(t=>{$("#tab-"+t).hidden=(t!==b.dataset.tab);});
+}));
+$("#prevM").onclick=()=>{view.setMonth(view.getMonth()-1);renderCalendar();renderMonthStats();};
+$("#nextM").onclick=()=>{view.setMonth(view.getMonth()+1);renderCalendar();renderMonthStats();};
+$("#todayBtn").onclick=()=>{view=new Date();view.setDate(1);renderCalendar();renderMonthStats();};
+
+$("#addMember").onclick=()=>{
+  const n=$("#newMember").value.trim();if(!n)return;
+  const m={id:uid(),naam:n,actief:true};
+  state.config.members=state.config.members.concat([m]);
+  state.config.roosters=(state.config.roosters||[]).concat([{id:uid(),memberId:m.id,n:[],s:[]}]);
+  $("#newMember").value="";writeConfig();
+};
+$("#newMember").addEventListener("keydown",e=>{if(e.key==="Enter")$("#addMember").click();});
+$("#saveInleg").onclick=()=>{state.config.inleg=num($("#setInleg").value)||2.5;writeConfig();};
+
+$("#addRooster").onclick=()=>{
+  const m=state.config.members[0];
+  if(!m){alert("Voeg eerst spelers toe.");return;}
+  state.config.roosters=(state.config.roosters||[]).concat([{id:uid(),memberId:m.id,n:[],s:[]}]);
+  writeConfig();
+};
+$("#fillRoosters").onclick=()=>{
+  const missing=state.config.members.filter(m=>roostersVan(m.id).length===0);
+  if(!missing.length){alert("Iedereen heeft al minstens één rooster.");return;}
+  state.config.roosters=(state.config.roosters||[]).concat(missing.map(m=>({id:uid(),memberId:m.id,n:[],s:[]})));
+  writeConfig();
+};
+
+$("#addPay").onclick=()=>{
+  const memberId=$("#payMember").value,bedrag=num($("#payAmount").value);
+  if(!memberId){alert("Voeg eerst spelers toe.");return;}
+  if(!bedrag){alert("Vul een bedrag in.");return;}
+  const p={id:uid(),memberId,datum:$("#payDate").value||iso(new Date()),bedrag,notitie:$("#payNote").value.trim()};
+  $("#payAmount").value="";$("#payNote").value="";writePayment(p);
+};
+
+$("#exportCsv").onclick=async()=>{
+  if(!downloads)return;
+  const T=computeTotals(),q=s=>'"'+String(s==null?"":s).replace(/"/g,'""')+'"';
+  let csv="SPELERS\nNaam;Trekkingen;Betaald;Eigen kost;Winstaandeel;Tegoed\n";
+  T.rows.forEach(r=>{csv+=[q(r.naam),r.trekkingen,r.betaald.toFixed(2),r.kosten.toFixed(2),r.winst.toFixed(2),r.tegoed.toFixed(2)].join(";")+"\n";});
+  csv+="\nBETALINGEN\nDatum;Naam;Bedrag;Opmerking\n";
+  state.payments.slice().sort((a,b)=>String(a.datum).localeCompare(String(b.datum))).forEach(p=>{
+    csv+=[p.datum,q(memberName(p.memberId)),num(p.bedrag).toFixed(2),q(p.notitie)].join(";")+"\n";});
+  csv+="\nTREKKINGEN\nDatum;Roosters;Kost p.r.;Kost;Getallen;Sterren;Winst\n";
+  drawList().forEach(d=>{
+    const rs=roostersVoorTrekking(d).length;
+    csv+=[d.datum,rs,num(d.inleg).toFixed(2),(rs*num(d.inleg)).toFixed(2),
+      q((d.nummers||[]).join(" ")),q((d.sterren||[]).join(" ")),winstVan(d).toFixed(2)].join(";")+"\n";});
+  try{await downloads.save({filename:"euromillions-boekhouding.csv",data:csv});}catch(e){}
+};
+
+$("#payDate").value=iso(new Date());
+renderAll();
+initStore();
+</script>
+</body>
+</html>
