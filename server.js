@@ -52,7 +52,7 @@ function loadState() {
 }
 
 function serveFile(request, response) {
-  const requested = request.url === '/' ? '/euromillions.html' : request.url;
+  const requested = request.url === '/' ? '/index.html' : request.url;
   const filePath = path.normalize(path.join(root, requested.split('?')[0]));
   if (!filePath.startsWith(root) || !fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
     response.writeHead(404); response.end('Niet gevonden'); return;
