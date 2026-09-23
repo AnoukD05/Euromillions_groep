@@ -3,151 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f2f0ea">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#14161b">
 <title>EuroMillions Groepspot</title>
-<style>
-:root{
-  box-sizing:border-box;
-  padding-top:env(safe-area-inset-top,0px);
-  padding-bottom:env(safe-area-inset-bottom,0px);
-  --bg:#f4f5f7; --panel:#fff; --panel-2:#fafbfc; --ink:#16191d; --ink-soft:#5d646e; --line:#e2e5ea;
-  --accent:#1c5fd6; --accent-soft:#e8f0fe; --gold:#f3b700; --gold-soft:#fdf3d8; --gold-ink:#8a6508;
-  --green:#1a7f4b; --green-soft:#e4f5ec; --red:#c0392b;
-  --radius:12px; --shadow:0 1px 2px rgba(0,0,0,.05), 0 6px 18px rgba(0,0,0,.05);
-}
-@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
-  --bg:#15181c; --panel:#1e2228; --panel-2:#242931; --ink:#eceff3; --ink-soft:#9aa3ae; --line:#333a44;
-  --accent:#5b9bff; --accent-soft:#1d2c44; --gold:#e3b23c; --gold-soft:#3a2f14; --gold-ink:#f3d58a;
-  --green:#4ad18c; --green-soft:#12301f; --red:#ff7d6e;
-  --shadow:0 1px 2px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.35);
-}}
-:root[data-theme="dark"]{
-  --bg:#15181c; --panel:#1e2228; --panel-2:#242931; --ink:#eceff3; --ink-soft:#9aa3ae; --line:#333a44;
-  --accent:#5b9bff; --accent-soft:#1d2c44; --gold:#e3b23c; --gold-soft:#3a2f14; --gold-ink:#f3d58a;
-  --green:#4ad18c; --green-soft:#12301f; --red:#ff7d6e;
-  --shadow:0 1px 2px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.35);
-}
-*,*::before,*::after{box-sizing:inherit}
-html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
-body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);
-  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Inter,Arial,sans-serif;font-size:15px;line-height:1.5;-webkit-text-size-adjust:100%}
-.wrap{max-width:1060px;margin:0 auto;padding:16px 14px 64px}
-header.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
-header.top h1{font-size:19px;margin:0;font-weight:650;letter-spacing:-.2px}
-header.top .sub{color:var(--ink-soft);font-size:12.5px;margin-top:2px}
-.logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(140deg,var(--gold),#8a6508);
-  display:grid;place-items:center;color:#fff;font-weight:700;font-size:17px;flex:none}
-.spacer{flex:1}
-.status{font-size:11.5px;color:var(--ink-soft);border:1px solid var(--line);border-radius:999px;padding:3px 10px;white-space:nowrap}
-.status.ok{color:var(--green);border-color:color-mix(in srgb,var(--green) 40%,var(--line))}
-nav.tabs{display:flex;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:4px;margin-bottom:16px;overflow-x:auto}
-nav.tabs button{flex:1;min-width:96px;border:0;background:transparent;color:var(--ink-soft);font:inherit;font-size:13.5px;
-  font-weight:550;padding:8px 10px;border-radius:999px;cursor:pointer;white-space:nowrap}
-nav.tabs button[aria-selected="true"]{background:var(--accent);color:#fff}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;margin-bottom:14px}
-.card h2{font-size:14px;text-transform:uppercase;letter-spacing:.6px;color:var(--ink-soft);margin:0 0 12px;font-weight:650}
-.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-button.btn{font:inherit;font-size:13.5px;font-weight:550;border-radius:9px;border:1px solid var(--line);
-  background:var(--panel-2);color:var(--ink);padding:8px 13px;cursor:pointer}
-button.btn:hover{border-color:var(--accent)}
-button.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
-button.btn.ghost{background:transparent}
-button.btn.danger{color:var(--red);border-color:color-mix(in srgb,var(--red) 35%,var(--line))}
-button.btn.sm{padding:5px 9px;font-size:12.5px}
-a.btn{display:inline-block;text-decoration:none}
-button.icon{background:transparent;border:0;color:var(--ink-soft);cursor:pointer;font-size:15px;padding:4px 7px;border-radius:7px;line-height:1}
-button.icon:hover{background:var(--panel-2);color:var(--ink)}
-input,select,textarea{font:inherit;font-size:14px;color:var(--ink);background:var(--panel-2);
-  border:1px solid var(--line);border-radius:9px;padding:8px 10px;width:100%}
-textarea{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.45;resize:vertical}
-input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
-label.f{display:block;font-size:12px;color:var(--ink-soft);margin-bottom:4px;font-weight:550}
-.field{flex:1;min-width:130px}
-.hint{font-size:12px;color:var(--ink-soft);margin-top:6px}
-
-/* kalender */
-.calhead{display:flex;align-items:center;gap:10px;margin-bottom:12px}
-.calhead .title{font-size:17px;font-weight:650;min-width:170px;text-transform:capitalize}
-.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
-.dow{text-align:center;font-size:11px;font-weight:650;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.5px}
-.cell{aspect-ratio:1/1;border:1px solid var(--line);border-radius:10px;background:var(--panel-2);
-  display:flex;flex-direction:column;align-items:center;padding:5px 3px;position:relative;font-size:14px;color:var(--ink-soft);overflow:hidden}
-.cell.empty{border:0;background:transparent}
-.cell.draw{cursor:pointer;background:var(--gold-soft);border-color:color-mix(in srgb,var(--gold) 45%,var(--line));color:var(--ink);font-weight:600}
-.cell.draw:hover{outline:2px solid var(--gold);outline-offset:-1px}
-.cell.today{box-shadow:inset 0 0 0 2px var(--accent)}
-.cell .num{font-size:15px;line-height:1.1}
-.cell .tag{margin-top:auto;font-size:10px;font-weight:650;border-radius:5px;padding:1px 4px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.cell .tag.win{background:var(--green);color:#fff}
-.cell .tag.played{background:var(--gold-ink);color:#fff}
-.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--ink-soft);margin-top:12px}
-.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
-
-/* stats & tabellen */
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
-.stat{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:11px 13px}
-.stat .k{font-size:11.5px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
-.stat .v{font-size:20px;font-weight:680;margin-top:3px;letter-spacing:-.4px}
-.pos{color:var(--green)} .neg{color:var(--red)}
-.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
-table{border-collapse:collapse;width:100%;font-size:14px;min-width:440px}
-th{text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--ink-soft);font-weight:650;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
-td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
-tr:last-child td{border-bottom:0}
-td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
-tfoot td{font-weight:650;border-top:2px solid var(--line);border-bottom:0}
-.empty-msg{color:var(--ink-soft);font-size:13.5px;padding:14px 2px;text-align:center}
-.chip{display:inline-block;font-size:11.5px;padding:2px 8px;border-radius:999px;background:var(--panel-2);border:1px solid var(--line);color:var(--ink-soft);margin:2px 3px 2px 0}
-.chip.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:600}
-.chip.win{background:var(--green-soft);border-color:var(--green);color:var(--green);font-weight:650}
-.balls{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
-.ball{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:650;background:var(--ink);color:var(--bg);flex:none}
-.ball.star{background:var(--gold);color:#4a3600}
-.ball.miss{opacity:.32}
-.ball.hit{background:var(--green);color:#fff}
-
-/* roosters */
-.rgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(188px,1fr));gap:12px}
-.rcard{border:1px solid var(--line);border-radius:12px;background:var(--panel-2);padding:10px}
-.rcard header{display:flex;align-items:center;gap:6px;margin-bottom:8px}
-.rcard header select{padding:5px 7px;font-size:13px;font-weight:600}
-.nums{display:grid;grid-template-columns:repeat(5,1fr);gap:3px}
-.stars{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;margin-top:6px}
-.pick{border:1px solid color-mix(in srgb,var(--accent) 35%,var(--line));background:var(--panel);color:var(--ink);
-  border-radius:6px;font:inherit;font-size:11.5px;font-weight:600;padding:4px 0;cursor:pointer;text-align:center;
-  font-variant-numeric:tabular-nums;line-height:1.2}
-.pick:hover{border-color:var(--accent)}
-.pick.on{background:var(--accent);border-color:var(--accent);color:#fff}
-.pick.st{border-color:color-mix(in srgb,var(--gold) 50%,var(--line))}
-.pick.st.on{background:var(--gold);border-color:var(--gold);color:#4a3600}
-.rcard footer{display:flex;align-items:center;gap:4px;margin-top:8px}
-.rcount{font-size:11px;color:var(--ink-soft);margin-left:auto;font-weight:600}
-.rcount.bad{color:var(--red)}
-
-/* modal */
-.backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;z-index:50;align-items:flex-start;justify-content:center;
-  padding:16px;overflow-y:auto;padding-top:max(24px,env(safe-area-inset-top,0px));padding-bottom:max(24px,env(safe-area-inset-bottom,0px))}
-.backdrop.open{display:flex}
-.modal{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.35);width:100%;max-width:560px;padding:18px}
-.modal h3{margin:0 0 3px;font-size:17px}
-.modal .date-sub{color:var(--ink-soft);font-size:13px;margin-bottom:14px}
-.modal .grp{margin-bottom:14px}
-.miniballs{display:flex;gap:6px;flex-wrap:wrap}
-.miniballs input{width:46px;text-align:center;padding:7px 2px;font-variant-numeric:tabular-nums;font-weight:600}
-.miniballs input.star{background:var(--gold-soft);border-color:color-mix(in srgb,var(--gold) 45%,var(--line))}
-.playerlist{display:flex;flex-wrap:wrap;gap:6px}
-.playerlist label{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--panel-2);
-  border-radius:999px;padding:5px 11px;font-size:13.5px;cursor:pointer;user-select:none}
-.playerlist label.checked{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:600}
-.playerlist input{width:auto;margin:0}
-.calcbox{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--ink-soft)}
-.calcbox b{color:var(--ink)}
-.checkrow{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px dashed var(--line);flex-wrap:wrap}
-.checkrow:last-child{border-bottom:0}
-.checkrow .who{font-size:12.5px;font-weight:600;min-width:74px}
-.modal-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:6px}
-.modal-actions .left{margin-right:auto}
-@media (max-width:560px){ .wrap{padding:12px 10px 60px} table{min-width:500px} .cell .num{font-size:13px} }
-</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <div class="wrap">
@@ -156,18 +18,32 @@ tfoot td{font-weight:650;border-top:2px solid var(--line);border-bottom:0}
     <div class="logo">€</div>
     <div>
       <h1>EuroMillions Groepspot</h1>
-      <div class="sub">Trekkingen dinsdag &amp; vrijdag · roosters · betalingen · winstverdeling</div>
     </div>
     <div class="spacer"></div>
-    <div class="status" id="status">Laden…</div>
+    <div id="status" class="status">Database laden…</div>
   </header>
 
   <nav class="tabs" role="tablist">
-    <button role="tab" data-tab="kalender" aria-selected="true">Kalender</button>
-    <button role="tab" data-tab="roosters" aria-selected="false">Roosters</button>
-    <button role="tab" data-tab="betalingen" aria-selected="false">Betalingen</button>
-    <button role="tab" data-tab="overzicht" aria-selected="false">Boekhouding</button>
-    <button role="tab" data-tab="spelers" aria-selected="false">Spelers</button>
+    <button role="tab" data-tab="kalender" aria-selected="true">
+      <span class="tab-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="3"/><line x1="3" y1="9.5" x2="21" y2="9.5"/><line x1="8" y1="2.5" x2="8" y2="6.5"/><line x1="16" y1="2.5" x2="16" y2="6.5"/></svg></span>
+      <span class="tab-lbl">Kalender</span>
+    </button>
+    <button role="tab" data-tab="roosters" aria-selected="false">
+      <span class="tab-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7.5" height="7.5" rx="1.6"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.6"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.6"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.6"/></svg></span>
+      <span class="tab-lbl">Roosters</span>
+    </button>
+    <button role="tab" data-tab="betalingen" aria-selected="false">
+      <span class="tab-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5.5" width="19" height="13.5" rx="2.6"/><line x1="2.5" y1="10" x2="21.5" y2="10"/></svg></span>
+      <span class="tab-lbl">Betalingen</span>
+    </button>
+    <button role="tab" data-tab="overzicht" aria-selected="false">
+      <span class="tab-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="3.5" y1="20.5" x2="20.5" y2="20.5"/><rect x="5.5" y="13" width="3.6" height="7.5" rx="1"/><rect x="10.7" y="8.5" width="3.6" height="12" rx="1"/><rect x="15.9" y="4" width="3.6" height="16.5" rx="1"/></svg></span>
+      <span class="tab-lbl">Boekhouding</span>
+    </button>
+    <button role="tab" data-tab="spelers" aria-selected="false">
+      <span class="tab-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20c0-3.4 2.5-6 5.5-6s5.5 2.6 5.5 6"/><circle cx="17.5" cy="9" r="2.4"/><path d="M15.2 20c.1-2.7 1.4-5 3.4-5.6"/></svg></span>
+      <span class="tab-lbl">Spelers</span>
+    </button>
   </nav>
 
   <!-- KALENDER -->
@@ -183,9 +59,9 @@ tfoot td{font-weight:650;border-top:2px solid var(--line);border-bottom:0}
       <div class="grid" id="dowRow"></div>
       <div class="grid" id="calGrid" style="margin-top:6px"></div>
       <div class="legend">
-        <span><i style="background:var(--gold)"></i>Trekkingsdag (di &amp; vr) — klik om in te vullen</span>
-        <span><i style="background:var(--green)"></i>Winst genoteerd</span>
-        <span><i style="background:var(--accent)"></i>Vandaag</span>
+        <span class="item"><i class="lg-draw"></i>Trekkingsdag</span>
+        <span class="item"><i class="lg-win"></i>Gewonnen</span>
+        <span class="item"><i class="lg-today"></i>Vandaag</span>
       </div>
     </div>
     <div class="card"><h2>Deze maand</h2><div class="stats" id="monthStats"></div></div>
@@ -198,11 +74,8 @@ tfoot td{font-weight:650;border-top:2px solid var(--line);border-bottom:0}
       <div class="row" style="margin-bottom:12px">
         <h2 style="margin:0">Vaste roosters</h2>
         <div class="spacer"></div>
-        <button class="btn sm" id="addRooster">+ Rooster</button>
-        <button class="btn sm ghost" id="fillRoosters">Rooster per speler</button>
       </div>
       <div class="rgrid" id="roosterGrid"></div>
-      <div class="hint">Klik 5 getallen en 2 sterren aan, net zoals op de site van de Nationale Loterij. Deze roosters gelden voor elke trekking; je hoeft ze dus niet telkens opnieuw in te geven. Wijzigingen bewaren zichzelf, en trekkingen die al ingevuld zijn behouden de roosters zoals ze toen waren.</div>
     </div>
   </section>
 
@@ -217,7 +90,6 @@ tfoot td{font-weight:650;border-top:2px solid var(--line);border-bottom:0}
         <div class="field"><label class="f">Opmerking</label><input type="text" id="payNote" placeholder="bv. cash, Payconiq…"></div>
         <button class="btn primary" id="addPay" style="margin-top:18px">Toevoegen</button>
       </div>
-      <div class="hint">Een <b>uitbetaling</b> uit de pot noteer je als een negatief bedrag (bv. −50).</div>
     </div>
     <div class="card"><h2>Alle betalingen</h2><div class="tblwrap"><table id="payTable"></table></div></div>
   </section>
@@ -227,12 +99,10 @@ tfoot td{font-weight:650;border-top:2px solid var(--line);border-bottom:0}
     <div class="card">
       <h2>Kas</h2>
       <div class="stats" id="kasStats"></div>
-      <div class="hint">Saldo in kas = ingelegd − kosten van de roosters + gewonnen bedragen − uitbetalingen.</div>
     </div>
     <div class="card">
       <h2>Per speler</h2>
       <div class="tblwrap"><table id="balTable"></table></div>
-      <div class="hint"><b>Tegoed</b> = betaald − eigen aandeel in de kosten + eigen aandeel in de winst. Negatief = die persoon moet bijleggen.</div>
       <div class="row" style="margin-top:12px"><button class="btn sm" id="exportCsv" hidden>Exporteer als CSV</button></div>
     </div>
   </section>
@@ -314,57 +184,102 @@ function prijzenNaarTekst(p){
 
 /* ---------- state ---------- */
 let state={config:{members:[],inleg:2.5,roosters:[]},payments:[],draws:{}};
-let db=null,downloads=null,writable=true;
+let downloads=null,writable=true,storeReady=false,storeLoading=null;
 let view=new Date(); view.setDate(1);
 
 const LS="em-pool-v2";
+const SUPABASE_URL="https://pptpddcfurtuuflvferw.supabase.co";
+const SUPABASE_KEY="sb_publishable_fYio-96YtmFqfECrgSKo3Q_Pbjo1pmB";
+const SUPABASE_REST=SUPABASE_URL+"/rest/v1";
 function saveLocal(){try{localStorage.setItem(LS,JSON.stringify(state));}catch(e){}}
 function loadLocal(){try{const r=localStorage.getItem(LS);if(r){const p=JSON.parse(r);
   state=Object.assign(state,p);state.config=Object.assign({members:[],inleg:2.5,roosters:[]},p.config||{});}}catch(e){}}
 
-async function initStore(){
-  try{db=await claude.use("db");}catch(e){db=null;}
+async function loadStore(){
+  $("#status").textContent="Database laden…";$("#status").className="status";
   try{downloads=await claude.use("downloads");}catch(e){downloads=null;}
   if(downloads)$("#exportCsv").hidden=false;
-  if(!db){loadLocal();$("#status").textContent="Lokaal opgeslagen (alleen dit toestel)";renderAll();return;}
-  $("#status").textContent="Gedeeld — verbinden…";
-  db.doc("pool/config").onSnapshot(s=>{
-    const d=s.exists?s.data():null;
-    state.config={
-      members:Array.isArray(d&&d.members)?d.members:[],
-      inleg:(d&&typeof d.inleg==="number")?d.inleg:2.5,
-      roosters:Array.isArray(d&&d.roosters)?d.roosters:[]
-    };
-    $("#status").textContent="Gedeeld met de groep";$("#status").className="status ok";
-    renderAll();
-  },()=>{});
-  db.collection("payments").onSnapshot(s=>{state.payments=s.docs.map(d=>Object.assign({id:d.id},d.data()));renderAll();},()=>{});
-  db.collection("draws").onSnapshot(s=>{const o={};s.docs.forEach(d=>{o[d.id]=Object.assign({},d.data());});state.draws=o;renderAll();},()=>{});
+  const results=await Promise.allSettled([
+    api("/pool_config?id=eq.1&select=data"),
+    api("/payments?select=id,data"),
+    api("/draws?select=date,data")
+  ]);
+  const [configResult,paymentResult,drawResult]=results;
+  if(configResult.status==="fulfilled"){
+    state.config=Object.assign({members:[],inleg:2.5,roosters:[]},configResult.value[0]?.data||{});
+  }
+  if(paymentResult.status==="fulfilled"){
+    state.payments=paymentResult.value.map(row=>Object.assign({id:row.id},row.data||{}));
+  }
+  if(drawResult.status==="fulfilled"){
+    state.draws={};drawResult.value.forEach(row=>{state.draws[row.date]=row.data||{};});
+  }
+  const failed=results.filter(result=>result.status==="rejected");
+  if(failed.length){
+    $("#status").textContent="Database gedeeltelijk geladen";$("#status").className="status";
+    console.error("Supabase laden gedeeltelijk mislukt",failed);
+  }else{
+    $("#status").textContent="Opgeslagen in database";$("#status").className="status ok";
+  }
+  storeReady=true;
+  renderAll();
+}
+function initStore(){
+  if(!storeLoading)storeLoading=loadStore();
+  return storeLoading;
+}
+async function api(path,options={}){
+  const response=await fetch(SUPABASE_REST+path,Object.assign({},options,{headers:Object.assign({
+    "Content-Type":"application/json",
+    apikey:SUPABASE_KEY,
+    Authorization:"Bearer "+SUPABASE_KEY
+  },options.headers||{})}));
+  if(!response.ok)throw new Error("Databasebewerking mislukt");
+  const text=await response.text();return text?JSON.parse(text):null;
 }
 async function writeConfig(){
-  if(!db){saveLocal();renderAll();return;}
-  try{await db.doc("pool/config").set({members:state.config.members,inleg:state.config.inleg,roosters:state.config.roosters||[]});}
-  catch(e){onWriteFail(e);}
+  if(!storeReady)return false;
+  try{
+    await api("/pool_config",{method:"POST",headers:{Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({id:1,data:{members:state.config.members,inleg:state.config.inleg,roosters:state.config.roosters||[]}})});
+    $("#status").textContent="Opgeslagen in database";$("#status").className="status ok";
+    return true;
+  }catch(e){onWriteFail(e);return false;}
 }
 let cfgTimer=null;
 function writeConfigSoon(){clearTimeout(cfgTimer);cfgTimer=setTimeout(writeConfig,500);}
 async function writeDraw(date,data){
-  if(!db){state.draws[date]=data;saveLocal();renderAll();return;}
-  try{await db.doc("draws/"+date).set(data);}catch(e){onWriteFail(e);}
+  try{
+    await api("/draws",{method:"POST",headers:{Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({date,data})});
+    state.draws[date]=data;renderAll();
+  }
+  catch(e){onWriteFail(e);}
 }
 async function deleteDraw(date){
-  if(!db){delete state.draws[date];saveLocal();renderAll();return;}
-  try{await db.doc("draws/"+date).delete();}catch(e){onWriteFail(e);}
+  try{
+    await api("/draws?date=eq."+encodeURIComponent(date),{method:"DELETE",headers:{Prefer:"return=minimal"}});
+    delete state.draws[date];renderAll();
+  }
+  catch(e){onWriteFail(e);}
 }
 async function writePayment(p){
-  if(!db){const i=state.payments.findIndex(x=>x.id===p.id);if(i<0)state.payments.push(p);else state.payments[i]=p;saveLocal();renderAll();return;}
-  try{const{id,...body}=p;await db.doc("payments/"+id).set(body);}catch(e){onWriteFail(e);}
+  try{
+    const{id,...body}=p;
+    await api("/payments",{method:"POST",headers:{Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({id,data:body})});
+    const index=state.payments.findIndex(x=>x.id===id);
+    if(index<0)state.payments.push(p);else state.payments[index]=p;
+    renderAll();
+  }
+  catch(e){onWriteFail(e);}
 }
 async function deletePayment(id){
-  if(!db){state.payments=state.payments.filter(x=>x.id!==id);saveLocal();renderAll();return;}
-  try{await db.doc("payments/"+id).delete();}catch(e){onWriteFail(e);}
+  try{
+    await api("/payments?id=eq."+encodeURIComponent(id),{method:"DELETE",headers:{Prefer:"return=minimal"}});
+    state.payments=state.payments.filter(p=>p.id!==id);renderAll();
+  }
+  catch(e){onWriteFail(e);}
 }
 function onWriteFail(e){
+  saveLocal();
   if(e&&e.code==="invalid_argument"){writable=false;$("#status").textContent="Alleen-lezen";$("#status").className="status";}
   else $("#status").textContent="Bewaren mislukt — probeer opnieuw";
   renderAll();
@@ -528,8 +443,7 @@ function renderRoosters(){
     let nums="";for(let i=1;i<=50;i++)nums+='<button class="pick'+(n.includes(i)?" on":"")+'" data-r="'+r.id+'" data-n="'+i+'">'+i+'</button>';
     let sts="";for(let i=1;i<=12;i++)sts+='<button class="pick st'+(s.includes(i)?" on":"")+'" data-r="'+r.id+'" data-s="'+i+'">★'+i+'</button>';
     const ok=n.length===5&&s.length===2;
-    return '<div class="rcard"><header><select data-rm="'+r.id+'">'+memberOptions(r.memberId)+'</select>'
-      +'<button class="icon" data-rdel="'+r.id+'" title="Rooster verwijderen">✕</button></header>'
+    return '<div class="rcard"><header><select data-rm="'+r.id+'">'+memberOptions(r.memberId)+'</select></header>'
       +'<div class="nums">'+nums+'</div><div class="stars">'+sts+'</div>'
       +'<footer><button class="btn sm ghost" data-rqp="'+r.id+'">Quick Pick</button>'
       +'<button class="btn sm ghost" data-rclr="'+r.id+'">Wissen</button>'
@@ -542,7 +456,10 @@ function renderRoosters(){
     const r=findRooster(sel.dataset.rm);if(r){r.memberId=sel.value;writeConfigSoon();}
   }));
   g.querySelectorAll("[data-rdel]").forEach(b=>b.addEventListener("click",()=>{
-    if(confirm("Dit rooster verwijderen?")){state.config.roosters=state.config.roosters.filter(x=>x.id!==b.dataset.rdel);writeConfig();}
+    if(confirm("Dit rooster verwijderen?")){
+      state.config.roosters=state.config.roosters.filter(x=>x.id!==b.dataset.rdel);
+      renderAll();writeConfig();
+    }
   }));
   g.querySelectorAll("[data-rqp]").forEach(b=>b.addEventListener("click",()=>{
     const r=findRooster(b.dataset.rqp);if(!r)return;
@@ -617,7 +534,10 @@ function renderMembers(){
   t.querySelectorAll("[data-delmem]").forEach(b=>b.addEventListener("click",()=>{
     const m=memberById(b.dataset.delmem);if(!m)return;
     if(confirm("“"+m.naam+"” verwijderen? Kies eerder “Op inactief” zodat de historiek klopt.")){
-      state.config.members=state.config.members.filter(x=>x.id!==m.id);writeConfig();}}));
+      state.config.members=state.config.members.filter(x=>x.id!==m.id);
+      state.config.roosters=(state.config.roosters||[]).filter(r=>r.memberId!==m.id);
+      renderAll();writeConfig();
+    }}));
 }
 
 /* ---------- trekking-venster ---------- */
@@ -783,30 +703,19 @@ $("#prevM").onclick=()=>{view.setMonth(view.getMonth()-1);renderCalendar();rende
 $("#nextM").onclick=()=>{view.setMonth(view.getMonth()+1);renderCalendar();renderMonthStats();};
 $("#todayBtn").onclick=()=>{view=new Date();view.setDate(1);renderCalendar();renderMonthStats();};
 
-$("#addMember").onclick=()=>{
+$("#addMember").onclick=async()=>{
+  if(!storeReady){await initStore();if(!storeReady)return;}
   const n=$("#newMember").value.trim();if(!n)return;
   const m={id:uid(),naam:n,actief:true};
   state.config.members=state.config.members.concat([m]);
   state.config.roosters=(state.config.roosters||[]).concat([{id:uid(),memberId:m.id,n:[],s:[]}]);
-  $("#newMember").value="";writeConfig();
+  $("#newMember").value="";renderAll();writeConfig();
 };
 $("#newMember").addEventListener("keydown",e=>{if(e.key==="Enter")$("#addMember").click();});
-$("#saveInleg").onclick=()=>{state.config.inleg=num($("#setInleg").value)||2.5;writeConfig();};
-
-$("#addRooster").onclick=()=>{
-  const m=state.config.members[0];
-  if(!m){alert("Voeg eerst spelers toe.");return;}
-  state.config.roosters=(state.config.roosters||[]).concat([{id:uid(),memberId:m.id,n:[],s:[]}]);
-  writeConfig();
-};
-$("#fillRoosters").onclick=()=>{
-  const missing=state.config.members.filter(m=>roostersVan(m.id).length===0);
-  if(!missing.length){alert("Iedereen heeft al minstens één rooster.");return;}
-  state.config.roosters=(state.config.roosters||[]).concat(missing.map(m=>({id:uid(),memberId:m.id,n:[],s:[]})));
-  writeConfig();
-};
+$("#saveInleg").onclick=()=>{if(!storeReady){alert("Even wachten: de database wordt nog geladen.");return;}state.config.inleg=num($("#setInleg").value)||2.5;writeConfig();};
 
 $("#addPay").onclick=()=>{
+  if(!storeReady){alert("Even wachten: de database wordt nog geladen.");return;}
   const memberId=$("#payMember").value,bedrag=num($("#payAmount").value);
   if(!memberId){alert("Voeg eerst spelers toe.");return;}
   if(!bedrag){alert("Vul een bedrag in.");return;}
@@ -831,7 +740,6 @@ $("#exportCsv").onclick=async()=>{
 };
 
 $("#payDate").value=iso(new Date());
-renderAll();
 initStore();
 </script>
 </body>
