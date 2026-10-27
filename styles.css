@@ -279,3 +279,9 @@ tfoot td{font-weight:750;border-top:2px solid var(--line);border-bottom:0}
   .cell .num{font-size:12.5px}
   .calhead .title{min-width:0;flex:1}
 }
+
+/* ---------- spaarpot ---------- */
+.pot-hero{background:linear-gradient(135deg,var(--c2-soft),var(--c1-soft));border-radius:16px;padding:18px 20px;margin-bottom:12px}
+.pot-hero .pot-k{font-size:12px;color:var(--ink-soft);font-weight:650}
+.pot-hero .pot-v{font-size:34px;font-weight:800;letter-spacing:-.8px;font-variant-numeric:tabular-nums;margin-top:2px}
+@media (max-width:420px){ nav.tabs button{font-size:9.4px} }

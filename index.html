@@ -36,6 +36,10 @@
       <span class="tab-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5.5" width="19" height="13.5" rx="2.6"/><line x1="2.5" y1="10" x2="21.5" y2="10"/></svg></span>
       <span class="tab-lbl">Betalingen</span>
     </button>
+    <button role="tab" data-tab="spaarpot" aria-selected="false">
+      <span class="tab-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="6.5" rx="7" ry="3"/><path d="M5 6.5v5c0 1.7 3.1 3 7 3s7-1.3 7-3v-5"/><path d="M5 11.5v5c0 1.7 3.1 3 7 3s7-1.3 7-3v-5"/></svg></span>
+      <span class="tab-lbl">Spaarpot</span>
+    </button>
     <button role="tab" data-tab="overzicht" aria-selected="false">
       <span class="tab-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="3.5" y1="20.5" x2="20.5" y2="20.5"/><rect x="5.5" y="13" width="3.6" height="7.5" rx="1"/><rect x="10.7" y="8.5" width="3.6" height="12" rx="1"/><rect x="15.9" y="4" width="3.6" height="16.5" rx="1"/></svg></span>
       <span class="tab-lbl">Boekhouding</span>
@@ -92,6 +96,31 @@
       </div>
     </div>
     <div class="card"><h2>Alle betalingen</h2><div class="tblwrap"><table id="payTable"></table></div></div>
+  </section>
+
+  <!-- SPAARPOT -->
+  <section id="tab-spaarpot" hidden>
+    <div class="card">
+      <h2>Spaarpot</h2>
+      <div class="pot-hero"><div class="pot-k">Saldo in de spaarpot</div><div class="pot-v" id="potSaldo"></div></div>
+      <div class="stats" id="potStats"></div>
+      <div class="hint" id="potHint"></div>
+    </div>
+    <div class="card">
+      <h2>Geld toevoegen of opnemen</h2>
+      <div class="row">
+        <div class="field"><label class="f">Wie</label><select id="potMember"></select></div>
+        <div class="field"><label class="f">Datum</label><input type="date" id="potDate"></div>
+        <div class="field" style="max-width:140px"><label class="f">Bedrag (€)</label><input type="number" step="0.01" min="0" id="potAmount" placeholder="10,00"></div>
+        <div class="field"><label class="f">Opmerking</label><input type="text" id="potNote" placeholder="bv. extra bijdrage, uitstap…"></div>
+      </div>
+      <div class="row" style="margin-top:12px">
+        <button class="btn primary" id="potDeposit">+ Storten</button>
+        <button class="btn" id="potWithdraw">− Opnemen</button>
+      </div>
+      <div class="hint">Bij storten: wie legt het geld in. Bij opnemen: wie krijgt het. Je kan nooit meer opnemen dan er in de spaarpot zit.</div>
+    </div>
+    <div class="card"><h2>Verloop</h2><div class="tblwrap"><table id="potTable"></table></div></div>
   </section>
 
   <!-- BOEKHOUDING -->
@@ -184,7 +213,7 @@ function prijzenNaarTekst(p){
 }
 
 /* ---------- state ---------- */
-let state={config:{members:[],inleg:2.5,roosters:[]},payments:[],draws:{}};
+let state={config:{members:[],inleg:2.5,roosters:[]},payments:[],pot:[],draws:{}};
 let downloads=null,writable=true,storeReady=false,storeLoading=null;
 let view=new Date(); view.setDate(1);
 
@@ -210,7 +239,9 @@ async function loadStore(){
     state.config=Object.assign({members:[],inleg:2.5,roosters:[]},configResult.value[0]?.data||{});
   }
   if(paymentResult.status==="fulfilled"){
-    state.payments=paymentResult.value.map(row=>Object.assign({id:row.id},row.data||{}));
+    const rows=paymentResult.value.map(row=>Object.assign({id:row.id},row.data||{}));
+    state.payments=rows.filter(p=>p.soort!=="pot");   // gewone betalingen van spelers
+    state.pot=rows.filter(p=>p.soort==="pot");        // stortingen/opnames spaarpot
   }
   if(drawResult.status==="fulfilled"){
     state.draws={};drawResult.value.forEach(row=>{state.draws[row.date]=row.data||{};});
@@ -279,6 +310,23 @@ async function deletePayment(id){
   }
   catch(e){onWriteFail(e);}
 }
+async function writePot(tx){
+  try{
+    const{id,...body}=tx;
+    await api("/payments",{method:"POST",headers:{Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({id,data:Object.assign({},body,{soort:"pot"})})});
+    const index=state.pot.findIndex(x=>x.id===id);
+    if(index<0)state.pot.push(tx);else state.pot[index]=tx;
+    renderAll();return true;
+  }
+  catch(e){onWriteFail(e);return false;}
+}
+async function deletePot(id){
+  try{
+    await api("/payments?id=eq."+encodeURIComponent(id),{method:"DELETE",headers:{Prefer:"return=minimal"}});
+    state.pot=state.pot.filter(p=>p.id!==id);renderAll();
+  }
+  catch(e){onWriteFail(e);}
+}
 function onWriteFail(e){
   saveLocal();
   if(e&&e.code==="invalid_argument"){writable=false;$("#status").textContent="Alleen-lezen";$("#status").className="status";}
@@ -328,7 +376,7 @@ function computeTotals(){
   const ensure=id=>per[id]||(per[id]={id,naam:memberName(id),betaald:0,kosten:0,winst:0,trekkingen:0});
   state.payments.forEach(p=>{ensure(p.memberId).betaald+=num(p.bedrag);});
 
-  let totKosten=0,totWinst=0;
+  let totKosten=0,totWinst=0,potWinst=0;
   drawList().forEach(d=>{
     const inleg=num(d.inleg);
     const rs=roostersVoorTrekking(d);
@@ -347,11 +395,8 @@ function computeTotals(){
     Object.keys(perLid).forEach(id=>{ensure(id).trekkingen+=1;});
 
     if(totaalWinst>0){
-      // De winst is gezamenlijk: iedereen speelt zijn eigen rooster, maar wat
-      // er gewonnen wordt gaat in de gezamenlijke pot en wordt gelijk verdeeld
-      // over alle roosters die die trekking meespeelden.
-      const n=rs.length||1;
-      rs.forEach(r=>ensure(r.memberId).winst+=totaalWinst/n);
+      // Alle winst gaat in de gezamenlijke spaarpot en wordt niet verdeeld.
+      potWinst+=totaalWinst;
     }
   });
 
@@ -359,13 +404,19 @@ function computeTotals(){
   rows.forEach(r=>r.tegoed=r.betaald-r.kosten+r.winst);
   rows.sort((a,b)=>a.naam.localeCompare(b.naam,"nl"));
   const totBetaald=rows.reduce((s,r)=>s+r.betaald,0);
-  return{rows,totBetaald,totKosten,totWinst,kas:totBetaald-totKosten+totWinst};
+  const potStortingen=state.pot.filter(t=>t.type!=="opname").reduce((x,t)=>x+num(t.bedrag),0);
+  const potOpnames=state.pot.filter(t=>t.type==="opname").reduce((x,t)=>x+num(t.bedrag),0);
+  const potSaldo=potWinst+potStortingen-potOpnames;
+  const totTegoed=rows.reduce((x,r)=>x+r.tegoed,0);
+  return{rows,totBetaald,totKosten,totWinst,potWinst,potStortingen,potOpnames,potSaldo,
+    totWinstSplit:totWinst-potWinst,totTegoed,
+    kas:totBetaald-totKosten+totWinst+potStortingen-potOpnames};
 }
 
 /* ---------- render ---------- */
 function renderAll(){
   renderCalendar();renderMonthStats();renderDrawTable();
-  renderRoosters();renderPayments();renderOverzicht();renderMembers();
+  renderRoosters();renderPayments();renderPot();renderOverzicht();renderMembers();
   if(document.activeElement!==$("#setInleg"))$("#setInleg").value=state.config.inleg;
   if(!writable)document.querySelectorAll("input,select,textarea,button.btn").forEach(el=>{
     if(el.id!=="exportCsv"&&!el.closest("nav.tabs")&&!el.closest(".calhead"))el.disabled=true;
@@ -505,20 +556,61 @@ function renderPayments(){
 
 function renderOverzicht(){
   const T=computeTotals();
+  const potExtra=[["Waarvan in spaarpot",eur(T.potSaldo),T.potSaldo>0?"pos":""],["Waarvan spelerstegoeden",eur(T.totTegoed)]];
   $("#kasStats").innerHTML=[
     ["Totaal ingelegd",eur(T.totBetaald)],["Kost van de roosters",eur(T.totKosten)],
     ["Totaal gewonnen",eur(T.totWinst),T.totWinst>0?"pos":""],
     ["Resultaat",eur(T.totWinst-T.totKosten),(T.totWinst-T.totKosten)>=0?"pos":"neg"],
     ["Saldo in kas",eur(T.kas),T.kas>=0?"pos":"neg"]
-  ].map(([k,v,c])=>'<div class="stat"><div class="k">'+k+'</div><div class="v '+(c||"")+'">'+v+'</div></div>').join("");
+  ].concat(potExtra).map(([k,v,c])=>'<div class="stat"><div class="k">'+k+'</div><div class="v '+(c||"")+'">'+v+'</div></div>').join("");
   const t=$("#balTable");
   if(!T.rows.length){t.innerHTML='<tbody><tr><td class="empty-msg">Voeg spelers toe in het tabblad “Spelers”.</td></tr></tbody>';return;}
-  t.innerHTML='<thead><tr><th>Naam</th><th class="num">Trekkingen</th><th class="num">Betaald</th><th class="num">Eigen kost</th><th class="num">Winstaandeel</th><th class="num">Tegoed</th></tr></thead><tbody>'
+  t.innerHTML='<thead><tr><th>Naam</th><th class="num">Trekkingen</th><th class="num">Betaald</th><th class="num">Eigen kost</th><th class="num">Tegoed</th></tr></thead><tbody>'
     +T.rows.map(r=>'<tr><td>'+esc(r.naam)+'</td><td class="num">'+r.trekkingen+'</td><td class="num">'+eur(r.betaald)+'</td>'
-      +'<td class="num">'+eur(r.kosten)+'</td><td class="num '+(r.winst>0?"pos":"")+'">'+eur(r.winst)+'</td>'
+      +'<td class="num">'+eur(r.kosten)+'</td>'
       +'<td class="num '+(r.tegoed>=0?"pos":"neg")+'"><b>'+eur(r.tegoed)+'</b></td></tr>').join("")
     +'</tbody><tfoot><tr><td>Totaal</td><td class="num"></td><td class="num">'+eur(T.totBetaald)+'</td><td class="num">'+eur(T.totKosten)
-    +'</td><td class="num">'+eur(T.totWinst)+'</td><td class="num">'+eur(T.kas)+'</td></tr></tfoot>';
+    +'</td><td class="num">'+eur(T.totTegoed)+'</td></tr></tfoot>';
+}
+
+function renderPot(){
+  const T=computeTotals(),cfg=state.config;
+  $("#potSaldo").textContent=eur(T.potSaldo);
+  $("#potSaldo").className="pot-v "+(T.potSaldo<0?"neg":"");
+  $("#potStats").innerHTML=[
+    ["Winst in spaarpot",eur(T.potWinst),T.potWinst>0?"pos":""],
+    ["Extra gestort",eur(T.potStortingen),T.potStortingen>0?"pos":""],
+    ["Opgenomen",eur(T.potOpnames),T.potOpnames>0?"neg":""]
+  ].map(([k,v,c])=>'<div class="stat"><div class="k">'+k+'</div><div class="v '+(c||"")+'">'+v+'</div></div>').join("");
+  $("#potHint").textContent="Alle winst van de trekkingen komt in de spaarpot en wordt niet verdeeld over de spelers.";
+
+  const sel=$("#potMember"),cur=sel.value;
+  sel.innerHTML='<option value="">Groep (niemand specifiek)</option>'
+    +cfg.members.map(m=>'<option value="'+m.id+'">'+esc(m.naam)+(m.actief===false?" (inactief)":"")+'</option>').join("");
+  if(cur)sel.value=cur;
+
+  const mv=[];
+  drawList().forEach(d=>{
+    const w=winstVan(d);if(w>0)mv.push({datum:d.datum,orde:0,id:"",oms:"Winst trekking",bedrag:w});
+  });
+  state.pot.forEach(t=>mv.push({datum:String(t.datum||""),orde:1,id:t.id,tx:t,
+    oms:(t.type==="opname"?"Opname":"Storting")+(t.memberId?" — "+memberName(t.memberId):""),
+    notitie:t.notitie,bedrag:t.type==="opname"?-num(t.bedrag):num(t.bedrag)}));
+  mv.sort((a,b)=>a.datum.localeCompare(b.datum)||a.orde-b.orde||String(a.id).localeCompare(String(b.id)));
+  let run=0;mv.forEach(m=>{run+=m.bedrag;m.saldo=run;});
+  const t=$("#potTable");
+  if(!mv.length){t.innerHTML='<tbody><tr><td class="empty-msg">Nog geen bewegingen in de spaarpot.</td></tr></tbody>';return;}
+  t.innerHTML='<thead><tr><th>Datum</th><th>Omschrijving</th><th class="num">Bedrag</th><th class="num">Saldo</th><th></th></tr></thead><tbody>'
+    +mv.slice().reverse().map(m=>'<tr><td>'+(m.datum?nlDate(m.datum):"—")+'</td>'
+      +'<td>'+esc(m.oms)+(m.notitie?' <span style="color:var(--ink-soft)">· '+esc(m.notitie)+'</span>':"")+'</td>'
+      +'<td class="num '+(m.bedrag>=0?"pos":"neg")+'">'+(m.bedrag>=0?"+ ":"")+eur(m.bedrag)+'</td>'
+      +'<td class="num">'+eur(m.saldo)+'</td>'
+      +'<td class="num">'+(m.tx?'<button class="icon" data-delpot="'+m.id+'">✕</button>':"")+'</td></tr>').join("")+'</tbody>';
+  t.querySelectorAll("[data-delpot]").forEach(b=>b.addEventListener("click",()=>{
+    const tx=state.pot.find(x=>x.id===b.dataset.delpot);if(!tx)return;
+    if(tx.type!=="opname"&&computeTotals().potSaldo-num(tx.bedrag)<-0.005){
+      alert("Deze storting kan niet verwijderd worden: er is al geld uit de spaarpot opgenomen.");return;}
+    if(confirm("Deze beweging verwijderen?"))deletePot(tx.id);}));
 }
 
 function renderMembers(){
@@ -677,7 +769,8 @@ function refreshModal(){
   const kost=rs.length*d.inleg,netto=totaal-kost;
   $("#mCalc").innerHTML='<b>'+rs.length+'</b> rooster(s) × '+eur(d.inleg)+' = <b>'+eur(kost)+'</b> inzet. '
     +'Winst: <b>'+eur(totaal)+'</b>'+(mWinstIsAuto?" (automatisch)":" (handmatig)")
-    +'. Netto: <b class="'+(netto>=0?"pos":"neg")+'">'+eur(netto)+'</b>.';
+    +'. Netto: <b class="'+(netto>=0?"pos":"neg")+'">'+eur(netto)+'</b>.'
+    +((totaal>0)?' Dit bedrag gaat naar de <b>spaarpot</b>.':'');
 }
 async function saveDraw(){
   const d=modalDraw();
@@ -698,7 +791,7 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&$("#backdrop").clas
 /* ---------- tabs & acties ---------- */
 document.querySelectorAll("nav.tabs button").forEach(b=>b.addEventListener("click",()=>{
   document.querySelectorAll("nav.tabs button").forEach(x=>x.setAttribute("aria-selected",String(x===b)));
-  ["kalender","roosters","betalingen","overzicht","spelers"].forEach(t=>{$("#tab-"+t).hidden=(t!==b.dataset.tab);});
+  ["kalender","roosters","betalingen","spaarpot","overzicht","spelers"].forEach(t=>{$("#tab-"+t).hidden=(t!==b.dataset.tab);});
 }));
 $("#prevM").onclick=()=>{view.setMonth(view.getMonth()-1);renderCalendar();renderMonthStats();};
 $("#nextM").onclick=()=>{view.setMonth(view.getMonth()+1);renderCalendar();renderMonthStats();};
@@ -724,11 +817,26 @@ $("#addPay").onclick=()=>{
   $("#payAmount").value="";$("#payNote").value="";writePayment(p);
 };
 
+function potBeweging(type){
+  if(!storeReady){alert("Even wachten: de database wordt nog geladen.");return;}
+  const bedrag=Math.round(num($("#potAmount").value)*100)/100;
+  if(bedrag<=0){alert("Vul een bedrag in.");return;}
+  if(type==="opname"){
+    const saldo=computeTotals().potSaldo;
+    if(bedrag>saldo+0.005){alert("Er zit maar "+eur(saldo)+" in de spaarpot.");return;}
+  }
+  const tx={id:uid(),soort:"pot",type,memberId:$("#potMember").value||"",datum:$("#potDate").value||iso(new Date()),
+    bedrag,notitie:$("#potNote").value.trim()};
+  $("#potAmount").value="";$("#potNote").value="";writePot(tx);
+}
+$("#potDeposit").onclick=()=>potBeweging("storting");
+$("#potWithdraw").onclick=()=>potBeweging("opname");
+
 $("#exportCsv").onclick=async()=>{
   if(!downloads)return;
   const T=computeTotals(),q=s=>'"'+String(s==null?"":s).replace(/"/g,'""')+'"';
-  let csv="SPELERS\nNaam;Trekkingen;Betaald;Eigen kost;Winstaandeel;Tegoed\n";
-  T.rows.forEach(r=>{csv+=[q(r.naam),r.trekkingen,r.betaald.toFixed(2),r.kosten.toFixed(2),r.winst.toFixed(2),r.tegoed.toFixed(2)].join(";")+"\n";});
+  let csv="SPELERS\nNaam;Trekkingen;Betaald;Eigen kost;Tegoed\n";
+  T.rows.forEach(r=>{csv+=[q(r.naam),r.trekkingen,r.betaald.toFixed(2),r.kosten.toFixed(2),r.tegoed.toFixed(2)].join(";")+"\n";});
   csv+="\nBETALINGEN\nDatum;Naam;Bedrag;Opmerking\n";
   state.payments.slice().sort((a,b)=>String(a.datum).localeCompare(String(b.datum))).forEach(p=>{
     csv+=[p.datum,q(memberName(p.memberId)),num(p.bedrag).toFixed(2),q(p.notitie)].join(";")+"\n";});
@@ -737,10 +845,15 @@ $("#exportCsv").onclick=async()=>{
     const rs=roostersVoorTrekking(d).length;
     csv+=[d.datum,rs,num(d.inleg).toFixed(2),(rs*num(d.inleg)).toFixed(2),
       q((d.nummers||[]).join(" ")),q((d.sterren||[]).join(" ")),winstVan(d).toFixed(2)].join(";")+"\n";});
+  csv+="\nSPAARPOT\nDatum;Soort;Wie;Bedrag;Opmerking\n";
+  state.pot.slice().sort((a,b)=>String(a.datum).localeCompare(String(b.datum))).forEach(t=>{
+    csv+=[t.datum,t.type==="opname"?"Opname":"Storting",q(t.memberId?memberName(t.memberId):"Groep"),num(t.bedrag).toFixed(2),q(t.notitie)].join(";")+"\n";});
+  csv+="Saldo spaarpot;;;"+T.potSaldo.toFixed(2)+";\n";
   try{await downloads.save({filename:"euromillions-boekhouding.csv",data:csv});}catch(e){}
 };
 
 $("#payDate").value=iso(new Date());
+$("#potDate").value=iso(new Date());
 initStore();
 </script>
 </body>
