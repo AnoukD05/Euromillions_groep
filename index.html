@@ -117,9 +117,11 @@
       <div class="row" style="margin-top:12px">
         <button class="btn primary" id="potDeposit">+ Storten</button>
         <button class="btn" id="potWithdraw">− Opnemen</button>
+        <button class="btn" id="potPayout">Uitbetalen aan speler</button>
       </div>
-      <div class="hint">Bij storten: wie legt het geld in. Bij opnemen: wie krijgt het. Je kan nooit meer opnemen dan er in de spaarpot zit.</div>
+      <div class="hint">Storten en opnemen wordt gelijk verdeeld over alle actieve spelers (bij opnemen geeft iedereen evenveel af); bij “Wie” kies je enkel wie het geld bracht of kreeg. “Uitbetalen” is voor een speler die stopt: kies hem bij “Wie”, het bedrag gaat dan volledig van zijn eigen aandeel af. Je kan nooit meer opnemen dan er in de spaarpot zit.</div>
     </div>
+    <div class="card"><h2>Verdeling per speler</h2><div class="tblwrap"><table id="potShares"></table></div></div>
     <div class="card"><h2>Verloop</h2><div class="tblwrap"><table id="potTable"></table></div></div>
   </section>
 
@@ -132,6 +134,7 @@
     <div class="card">
       <h2>Per speler</h2>
       <div class="tblwrap"><table id="balTable"></table></div>
+      <div class="hint">Spaarpotaandeel = het bedrag dat je aan een speler uitbetaalt als hij stopt: zijn deel van de winst, plus zijn deel van extra stortingen, min zijn deel van opnames. Het tegoed is apart: wat hij betaald heeft min wat zijn roosters kostten.</div>
       <div class="row" style="margin-top:12px"><button class="btn sm" id="exportCsv" hidden>Exporteer als CSV</button></div>
     </div>
   </section>
@@ -372,8 +375,8 @@ function winstVan(d){
 
 function computeTotals(){
   const per={};
-  state.config.members.forEach(m=>per[m.id]={id:m.id,naam:m.naam,betaald:0,kosten:0,winst:0,trekkingen:0});
-  const ensure=id=>per[id]||(per[id]={id,naam:memberName(id),betaald:0,kosten:0,winst:0,trekkingen:0});
+  state.config.members.forEach(m=>per[m.id]={id:m.id,naam:m.naam,betaald:0,kosten:0,winst:0,gestort:0,opgenomen:0,uitbetaald:0,trekkingen:0});
+  const ensure=id=>per[id]||(per[id]={id,naam:memberName(id),betaald:0,kosten:0,winst:0,gestort:0,opgenomen:0,uitbetaald:0,trekkingen:0});
   state.payments.forEach(p=>{ensure(p.memberId).betaald+=num(p.bedrag);});
 
   let totKosten=0,totWinst=0,potWinst=0;
@@ -395,22 +398,37 @@ function computeTotals(){
     Object.keys(perLid).forEach(id=>{ensure(id).trekkingen+=1;});
 
     if(totaalWinst>0){
-      // Alle winst gaat in de gezamenlijke spaarpot en wordt niet verdeeld.
+      // Alle winst gaat rechtstreeks in de spaarpot. Elke speler krijgt er zijn
+      // eerlijke deel van als spaarpotaandeel (niet in het tegoed).
       potWinst+=totaalWinst;
+      const ids=rs.length?rs.map(r=>r.memberId):state.config.members.filter(m=>m.actief!==false).map(m=>m.id);
+      ids.forEach(id=>ensure(id).winst+=totaalWinst/ids.length);
     }
   });
 
+  // Stortingen en opnames: gelijk verdeeld over de spelers die toen meededen.
+  // Een uitbetaling gaat volledig van het aandeel van die ene speler af.
+  const actieven=state.config.members.filter(m=>m.actief!==false).map(m=>m.id);
+  let potStortingen=0,potOpnames=0,potUitbetaald=0;
+  state.pot.forEach(t=>{
+    const b=num(t.bedrag);
+    if(t.type==="uitbetaling"){potUitbetaald+=b;if(t.memberId)ensure(t.memberId).uitbetaald+=b;return;}
+    const ids=(t.deelnemers&&t.deelnemers.length)?t.deelnemers:actieven;
+    const key=t.type==="opname"?"opgenomen":"gestort";
+    if(t.type==="opname")potOpnames+=b;else potStortingen+=b;
+    ids.forEach(id=>ensure(id)[key]+=b/ids.length);
+  });
+
   const rows=Object.values(per);
-  rows.forEach(r=>r.tegoed=r.betaald-r.kosten+r.winst);
+  rows.forEach(r=>{r.tegoed=r.betaald-r.kosten;r.aandeel=r.winst+r.gestort-r.opgenomen-r.uitbetaald;});
   rows.sort((a,b)=>a.naam.localeCompare(b.naam,"nl"));
   const totBetaald=rows.reduce((s,r)=>s+r.betaald,0);
-  const potStortingen=state.pot.filter(t=>t.type!=="opname").reduce((x,t)=>x+num(t.bedrag),0);
-  const potOpnames=state.pot.filter(t=>t.type==="opname").reduce((x,t)=>x+num(t.bedrag),0);
-  const potSaldo=potWinst+potStortingen-potOpnames;
+  const potSaldo=potWinst+potStortingen-potOpnames-potUitbetaald;
   const totTegoed=rows.reduce((x,r)=>x+r.tegoed,0);
-  return{rows,totBetaald,totKosten,totWinst,potWinst,potStortingen,potOpnames,potSaldo,
-    totWinstSplit:totWinst-potWinst,totTegoed,
-    kas:totBetaald-totKosten+totWinst+potStortingen-potOpnames};
+  const totAandeel=rows.reduce((x,r)=>x+r.aandeel,0);
+  return{rows,totBetaald,totKosten,totWinst,potWinst,potStortingen,potOpnames,potUitbetaald,potSaldo,
+    totTegoed,totAandeel,
+    kas:totBetaald-totKosten+totWinst+potStortingen-potOpnames-potUitbetaald};
 }
 
 /* ---------- render ---------- */
@@ -565,12 +583,13 @@ function renderOverzicht(){
   ].concat(potExtra).map(([k,v,c])=>'<div class="stat"><div class="k">'+k+'</div><div class="v '+(c||"")+'">'+v+'</div></div>').join("");
   const t=$("#balTable");
   if(!T.rows.length){t.innerHTML='<tbody><tr><td class="empty-msg">Voeg spelers toe in het tabblad “Spelers”.</td></tr></tbody>';return;}
-  t.innerHTML='<thead><tr><th>Naam</th><th class="num">Trekkingen</th><th class="num">Betaald</th><th class="num">Eigen kost</th><th class="num">Tegoed</th></tr></thead><tbody>'
+  t.innerHTML='<thead><tr><th>Naam</th><th class="num">Trekkingen</th><th class="num">Betaald</th><th class="num">Eigen kost</th><th class="num">Tegoed</th><th class="num">Spaarpotaandeel</th></tr></thead><tbody>'
     +T.rows.map(r=>'<tr><td>'+esc(r.naam)+'</td><td class="num">'+r.trekkingen+'</td><td class="num">'+eur(r.betaald)+'</td>'
       +'<td class="num">'+eur(r.kosten)+'</td>'
-      +'<td class="num '+(r.tegoed>=0?"pos":"neg")+'"><b>'+eur(r.tegoed)+'</b></td></tr>').join("")
+      +'<td class="num '+(r.tegoed>=0?"pos":"neg")+'"><b>'+eur(r.tegoed)+'</b></td>'
+      +'<td class="num '+(r.aandeel>=0?"pos":"neg")+'"><b>'+eur(r.aandeel)+'</b></td></tr>').join("")
     +'</tbody><tfoot><tr><td>Totaal</td><td class="num"></td><td class="num">'+eur(T.totBetaald)+'</td><td class="num">'+eur(T.totKosten)
-    +'</td><td class="num">'+eur(T.totTegoed)+'</td></tr></tfoot>';
+    +'</td><td class="num">'+eur(T.totTegoed)+'</td><td class="num">'+eur(T.totAandeel)+'</td></tr></tfoot>';
 }
 
 function renderPot(){
@@ -580,22 +599,33 @@ function renderPot(){
   $("#potStats").innerHTML=[
     ["Winst in spaarpot",eur(T.potWinst),T.potWinst>0?"pos":""],
     ["Extra gestort",eur(T.potStortingen),T.potStortingen>0?"pos":""],
-    ["Opgenomen",eur(T.potOpnames),T.potOpnames>0?"neg":""]
+    ["Opgenomen",eur(T.potOpnames),T.potOpnames>0?"neg":""],
+    ["Uitbetaald aan spelers",eur(T.potUitbetaald),T.potUitbetaald>0?"neg":""]
   ].map(([k,v,c])=>'<div class="stat"><div class="k">'+k+'</div><div class="v '+(c||"")+'">'+v+'</div></div>').join("");
-  $("#potHint").textContent="Alle winst van de trekkingen komt in de spaarpot en wordt niet verdeeld over de spelers.";
+  $("#potHint").textContent="Alle winst gaat rechtstreeks in de spaarpot. Elke speler heeft er een eerlijk aandeel in (zie Boekhouding).";
 
   const sel=$("#potMember"),cur=sel.value;
   sel.innerHTML='<option value="">Groep (niemand specifiek)</option>'
     +cfg.members.map(m=>'<option value="'+m.id+'">'+esc(m.naam)+(m.actief===false?" (inactief)":"")+'</option>').join("");
   if(cur)sel.value=cur;
 
+  const sh=$("#potShares");
+  if(!T.rows.length){sh.innerHTML='<tbody><tr><td class="empty-msg">Nog geen spelers.</td></tr></tbody>';}
+  else sh.innerHTML='<thead><tr><th>Naam</th><th class="num">Winst</th><th class="num">Gestort</th><th class="num">Opgenomen</th><th class="num">Uitbetaald</th><th class="num">Aandeel</th></tr></thead><tbody>'
+    +T.rows.map(r=>'<tr><td>'+esc(r.naam)+'</td><td class="num">'+eur(r.winst)+'</td><td class="num">'+eur(r.gestort)+'</td>'
+      +'<td class="num">'+eur(r.opgenomen)+'</td><td class="num">'+eur(r.uitbetaald)+'</td>'
+      +'<td class="num '+(r.aandeel>=0?"pos":"neg")+'"><b>'+eur(r.aandeel)+'</b></td></tr>').join("")
+    +'</tbody><tfoot><tr><td>Totaal</td><td class="num">'+eur(T.potWinst)+'</td><td class="num">'+eur(T.potStortingen)+'</td><td class="num">'+eur(T.potOpnames)
+    +'</td><td class="num">'+eur(T.potUitbetaald)+'</td><td class="num">'+eur(T.totAandeel)+'</td></tr></tfoot>';
+
   const mv=[];
   drawList().forEach(d=>{
     const w=winstVan(d);if(w>0)mv.push({datum:d.datum,orde:0,id:"",oms:"Winst trekking",bedrag:w});
   });
   state.pot.forEach(t=>mv.push({datum:String(t.datum||""),orde:1,id:t.id,tx:t,
-    oms:(t.type==="opname"?"Opname":"Storting")+(t.memberId?" — "+memberName(t.memberId):""),
-    notitie:t.notitie,bedrag:t.type==="opname"?-num(t.bedrag):num(t.bedrag)}));
+    oms:({storting:"Storting",opname:"Opname",uitbetaling:"Uitbetaling"}[t.type]||"Storting")+(t.memberId?" — "+memberName(t.memberId):""),
+    notitie:[(t.type!=="uitbetaling"&&t.deelnemers&&t.deelnemers.length)?"verdeeld over "+t.deelnemers.length+" spelers":"",t.notitie].filter(Boolean).join(" · "),
+    bedrag:t.type==="storting"||!t.type?num(t.bedrag):-num(t.bedrag)}));
   mv.sort((a,b)=>a.datum.localeCompare(b.datum)||a.orde-b.orde||String(a.id).localeCompare(String(b.id)));
   let run=0;mv.forEach(m=>{run+=m.bedrag;m.saldo=run;});
   const t=$("#potTable");
@@ -608,7 +638,7 @@ function renderPot(){
       +'<td class="num">'+(m.tx?'<button class="icon" data-delpot="'+m.id+'">✕</button>':"")+'</td></tr>').join("")+'</tbody>';
   t.querySelectorAll("[data-delpot]").forEach(b=>b.addEventListener("click",()=>{
     const tx=state.pot.find(x=>x.id===b.dataset.delpot);if(!tx)return;
-    if(tx.type!=="opname"&&computeTotals().potSaldo-num(tx.bedrag)<-0.005){
+    if((tx.type==="storting"||!tx.type)&&computeTotals().potSaldo-num(tx.bedrag)<-0.005){
       alert("Deze storting kan niet verwijderd worden: er is al geld uit de spaarpot opgenomen.");return;}
     if(confirm("Deze beweging verwijderen?"))deletePot(tx.id);}));
 }
@@ -821,22 +851,31 @@ function potBeweging(type){
   if(!storeReady){alert("Even wachten: de database wordt nog geladen.");return;}
   const bedrag=Math.round(num($("#potAmount").value)*100)/100;
   if(bedrag<=0){alert("Vul een bedrag in.");return;}
-  if(type==="opname"){
-    const saldo=computeTotals().potSaldo;
-    if(bedrag>saldo+0.005){alert("Er zit maar "+eur(saldo)+" in de spaarpot.");return;}
+  const T=computeTotals(),actieven=state.config.members.filter(m=>m.actief!==false).map(m=>m.id);
+  if(type==="uitbetaling"){
+    const id=$("#potMember").value;
+    if(!id){alert("Kies bij “Wie” de speler die uitbetaald wordt.");return;}
+    const r=T.rows.find(x=>x.id===id),max=r?r.aandeel:0;
+    if(bedrag>max+0.005){alert(memberName(id)+" heeft maar "+eur(max)+" aandeel in de spaarpot.");return;}
+    if(bedrag>T.potSaldo+0.005){alert("Er zit maar "+eur(T.potSaldo)+" in de spaarpot.");return;}
+  }else{
+    if(!actieven.length){alert("Er zijn geen actieve spelers om het bedrag over te verdelen.");return;}
+    if(type==="opname"&&bedrag>T.potSaldo+0.005){alert("Er zit maar "+eur(T.potSaldo)+" in de spaarpot.");return;}
   }
   const tx={id:uid(),soort:"pot",type,memberId:$("#potMember").value||"",datum:$("#potDate").value||iso(new Date()),
     bedrag,notitie:$("#potNote").value.trim()};
+  if(type!=="uitbetaling")tx.deelnemers=actieven;   // wie deelt mee in deze storting/opname
   $("#potAmount").value="";$("#potNote").value="";writePot(tx);
 }
 $("#potDeposit").onclick=()=>potBeweging("storting");
 $("#potWithdraw").onclick=()=>potBeweging("opname");
+$("#potPayout").onclick=()=>potBeweging("uitbetaling");
 
 $("#exportCsv").onclick=async()=>{
   if(!downloads)return;
   const T=computeTotals(),q=s=>'"'+String(s==null?"":s).replace(/"/g,'""')+'"';
-  let csv="SPELERS\nNaam;Trekkingen;Betaald;Eigen kost;Tegoed\n";
-  T.rows.forEach(r=>{csv+=[q(r.naam),r.trekkingen,r.betaald.toFixed(2),r.kosten.toFixed(2),r.tegoed.toFixed(2)].join(";")+"\n";});
+  let csv="SPELERS\nNaam;Trekkingen;Betaald;Eigen kost;Tegoed;Spaarpotaandeel\n";
+  T.rows.forEach(r=>{csv+=[q(r.naam),r.trekkingen,r.betaald.toFixed(2),r.kosten.toFixed(2),r.tegoed.toFixed(2),r.aandeel.toFixed(2)].join(";")+"\n";});
   csv+="\nBETALINGEN\nDatum;Naam;Bedrag;Opmerking\n";
   state.payments.slice().sort((a,b)=>String(a.datum).localeCompare(String(b.datum))).forEach(p=>{
     csv+=[p.datum,q(memberName(p.memberId)),num(p.bedrag).toFixed(2),q(p.notitie)].join(";")+"\n";});
@@ -847,7 +886,7 @@ $("#exportCsv").onclick=async()=>{
       q((d.nummers||[]).join(" ")),q((d.sterren||[]).join(" ")),winstVan(d).toFixed(2)].join(";")+"\n";});
   csv+="\nSPAARPOT\nDatum;Soort;Wie;Bedrag;Opmerking\n";
   state.pot.slice().sort((a,b)=>String(a.datum).localeCompare(String(b.datum))).forEach(t=>{
-    csv+=[t.datum,t.type==="opname"?"Opname":"Storting",q(t.memberId?memberName(t.memberId):"Groep"),num(t.bedrag).toFixed(2),q(t.notitie)].join(";")+"\n";});
+    csv+=[t.datum,({storting:"Storting",opname:"Opname",uitbetaling:"Uitbetaling"}[t.type]||"Storting"),q(t.memberId?memberName(t.memberId):"Groep"),num(t.bedrag).toFixed(2),q(t.notitie)].join(";")+"\n";});
   csv+="Saldo spaarpot;;;"+T.potSaldo.toFixed(2)+";\n";
   try{await downloads.save({filename:"euromillions-boekhouding.csv",data:csv});}catch(e){}
 };
